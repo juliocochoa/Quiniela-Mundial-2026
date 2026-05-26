@@ -1,6 +1,6 @@
-# FIFA 2026 - Quiniela Mundial El Círculo (React App)
+# Quiniela Mundial 2026
 
-Este es un proyecto de React (Single Page Application) moderno, responsivo y dinámico, construido con **Vite**, **Tailwind CSS** y **React Router**. Integra en una sola interfaz interactiva las pantallas de Login, Pronósticos (My Picks), Resultados de Partidos y la Tabla de Clasificación Mundial.
+Este es un proyecto de React (Single Page Application) moderno, responsivo y dinámico, construido con **Vite**, **Tailwind CSS** y **React Router**. Integra en una sola interfaz interactiva las pantallas de Login, Pronósticos (Picks), Resultados de Partidos y la Tabla de Posiciones.
 
 ## Estructura del Proyecto
 
