@@ -1,0 +1,409 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>FIFA 2026 - Match Results</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;500;600;700;800&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#444650",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "on-background": "#191c1d",
+                        "secondary-fixed-dim": "#ffb4aa",
+                        "on-tertiary-container": "#4c3f00",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#000c2e",
+                        "outline-variant": "#c5c6d1",
+                        "inverse-primary": "#b3c5ff",
+                        "secondary-fixed": "#ffdad5",
+                        "on-surface": "#191c1d",
+                        "primary-container": "#001f5b",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "outline": "#757681",
+                        "on-secondary-fixed-variant": "#930007",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-tint": "#465c99",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e1e3e4",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#bc000c",
+                        "surface-container": "#edeeef",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-dim": "#d9dadb",
+                        "primary-fixed-dim": "#b3c5ff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#c9a900",
+                        "on-secondary-container": "#fffbff",
+                        "inverse-surface": "#2e3132",
+                        "on-secondary-fixed": "#410001",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffe16d",
+                        "tertiary": "#705d00",
+                        "error": "#ba1a1a",
+                        "secondary": "#bc000c",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-tertiary-fixed": "#221b00",
+                        "on-primary-fixed": "#00184a",
+                        "on-primary-fixed-variant": "#2d4480",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "background": "#f8f9fa",
+                        "on-primary-container": "#7389ca"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "section-gap": "80px",
+                        "margin-desktop": "48px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Anybody"],
+                        "headline-lg": ["Anybody"],
+                        "label-sm": ["Space Grotesk"],
+                        "body-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["40px", {"lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .live-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-7xl mx-auto">
+<h1 class="text-headline-lg font-headline-lg text-primary tracking-tighter">FIFA 2026</h1>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-sm text-label-sm uppercase tracking-wider" href="#">Picks</a>
+<a class="text-primary border-b-2 border-secondary pb-1 font-label-sm text-label-sm uppercase tracking-wider" href="#">Results</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-sm text-label-sm uppercase tracking-wider" href="#">Leaderboard</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all scale-95 active:opacity-80">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all scale-95 active:opacity-80">settings</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_YiHXPt9StB1RV0pLYw63HzugPeG_hTZw8UhmkFNRwoN8EE_7MUhltslzzLFaEapbZpcvdfPsAomjFSpNEr5dZGD-3t3JeUPGpgkKg1kXEr0jrJbeOO2SffuJhR5oGuUR2vYv8ccX1ZuX19gU4YsI7aXH8rc4OWtMbZd8qkwSFIoEFSz8vZelG6Gt8OyC1NFBBFrwAXoXiriKCPbWpi3LUweM79yCAbMmAlzF5SrPfsgZCxmgfv-B8xHEk55asR9Oo4ai68GbBACT">
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-gutter py-8">
+<!-- Page Header & Stats -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-gutter">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-[0.2em] mb-2 block">Group Stage</span>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">Match Results</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">Track all tournament outcomes. Final scores are verified by FIFA officials. Predictions are locked for completed and live events.</p>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Completed</span>
+<span class="text-2xl font-bold text-primary mt-1">42 / 64</span>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Live Matches</span>
+<span class="text-2xl font-bold text-secondary flex items-center gap-2 mt-1">
+<span class="w-2 h-2 bg-secondary rounded-full live-pulse"></span>
+                    2
+                </span>
+</div>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex gap-3 mb-8 overflow-x-auto scroll-hide pb-2">
+<button class="px-6 py-2 bg-primary text-on-primary rounded-full font-label-sm text-label-sm shadow-sm uppercase tracking-wider">All Days</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-label-sm text-label-sm transition-all border border-outline-variant uppercase tracking-wider">Yesterday</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-label-sm text-label-sm transition-all border border-outline-variant uppercase tracking-wider">June 24</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-full font-label-sm text-label-sm transition-all border border-outline-variant uppercase tracking-wider">June 23</button>
+</div>
+<!-- Results Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- LIVE MATCH CARD -->
+<div class="bg-surface-container-lowest border border-secondary/30 rounded-xl overflow-hidden hover:shadow-[0_4px_12px_rgba(188,0,12,0.1)] transition-all">
+<div class="bg-secondary px-4 py-1 flex justify-between items-center">
+<span class="text-label-sm font-label-sm text-on-secondary uppercase flex items-center gap-2 tracking-wider">
+<span class="w-1.5 h-1.5 bg-on-secondary rounded-full live-pulse"></span>
+                    LIVE • 78'
+                </span>
+<span class="text-label-sm font-label-sm text-on-secondary opacity-80 uppercase tracking-wider">Group E</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden">
+<img alt="France" class="w-full h-full object-cover" src="https://flagcdn.com/w160/fr.png">
+</div>
+<span class="font-bold text-lg text-center">France</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-primary">2</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-primary">1</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-tighter">Progress</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden">
+<img alt="Japan" class="w-full h-full object-cover" src="https://flagcdn.com/w160/jp.png">
+</div>
+<span class="font-bold text-lg text-center">Japan</span>
+</div>
+</div>
+</div>
+</div>
+<!-- COMPLETED MATCH CARD -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:shadow-md transition-all group" style="transform: scale(1);">
+<div class="bg-surface-container-high px-4 py-1 flex justify-between items-center border-b border-outline-variant">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase flex items-center gap-2 tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    FINISHED
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Group B</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="Brazil" class="w-full h-full object-cover" src="https://flagcdn.com/w160/br.png">
+</div>
+<span class="font-bold text-lg text-center">Brazil</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-on-surface">3</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-on-surface">0</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Full Time</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="South Korea" class="w-full h-full object-cover" src="https://flagcdn.com/w160/kr.png">
+</div>
+<span class="font-bold text-lg text-center">S. Korea</span>
+</div>
+</div>
+</div>
+</div>
+<!-- COMPLETED MATCH CARD 2 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:shadow-md transition-all group">
+<div class="bg-surface-container-high px-4 py-1 flex justify-between items-center border-b border-outline-variant">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase flex items-center gap-2 tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    FINISHED
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Group B</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="Spain" class="w-full h-full object-cover" src="https://flagcdn.com/w160/es.png">
+</div>
+<span class="font-bold text-lg text-center">Spain</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-on-surface">1</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-on-surface">1</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Full Time</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="Germany" class="w-full h-full object-cover" src="https://flagcdn.com/w160/de.png">
+</div>
+<span class="font-bold text-lg text-center">Germany</span>
+</div>
+</div>
+</div>
+</div>
+<!-- COMPLETED MATCH CARD 3 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:shadow-md transition-all group">
+<div class="bg-surface-container-high px-4 py-1 flex justify-between items-center border-b border-outline-variant">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase flex items-center gap-2 tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    FINISHED
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Group C</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="Argentina" class="w-full h-full object-cover" src="https://flagcdn.com/w160/ar.png">
+</div>
+<span class="font-bold text-lg text-center">Argentina</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-on-surface">2</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-on-surface">0</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Full Time</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="Mexico" class="w-full h-full object-cover" src="https://flagcdn.com/w160/mx.png">
+</div>
+<span class="font-bold text-lg text-center">Mexico</span>
+</div>
+</div>
+</div>
+</div>
+<!-- COMPLETED MATCH CARD 4 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden hover:shadow-md transition-all group" style="transform: scale(1);">
+<div class="bg-surface-container-high px-4 py-1 flex justify-between items-center border-b border-outline-variant">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase flex items-center gap-2 tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    FINISHED
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Group D</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="USA" class="w-full h-full object-cover" src="https://flagcdn.com/w160/us.png">
+</div>
+<span class="font-bold text-lg text-center">USA</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-on-surface">0</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-on-surface">1</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Full Time</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden grayscale-[0.3] group-hover:grayscale-0 transition-all">
+<img alt="England" class="w-full h-full object-cover" src="https://flagcdn.com/w160/gb-eng.png">
+</div>
+<span class="font-bold text-lg text-center">England</span>
+</div>
+</div>
+</div>
+</div>
+<!-- LIVE MATCH CARD 2 -->
+<div class="bg-surface-container-lowest border border-secondary/30 rounded-xl overflow-hidden hover:shadow-[0_4px_12px_rgba(188,0,12,0.1)] transition-all" style="transform: scale(1);">
+<div class="bg-secondary px-4 py-1 flex justify-between items-center">
+<span class="text-label-sm font-label-sm text-on-secondary uppercase flex items-center gap-2 tracking-wider">
+<span class="w-1.5 h-1.5 bg-on-secondary rounded-full live-pulse"></span>
+                    LIVE • 34'
+                </span>
+<span class="text-label-sm font-label-sm text-on-secondary opacity-80 uppercase tracking-wider">Group F</span>
+</div>
+<div class="p-gutter">
+<div class="flex items-center justify-between gap-4">
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden">
+<img alt="Portugal" class="w-full h-full object-cover" src="https://flagcdn.com/w160/pt.png">
+</div>
+<span class="font-bold text-lg text-center">Portugal</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="flex items-center gap-3">
+<span class="text-5xl font-display-lg text-primary">0</span>
+<span class="text-on-surface-variant font-bold opacity-30">—</span>
+<span class="text-5xl font-display-lg text-primary">0</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-tighter">Progress</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden">
+<img alt="Ghana" class="w-full h-full object-cover" src="https://flagcdn.com/w160/gh.png">
+</div>
+<span class="font-bold text-lg text-center">Ghana</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Public Prediction Insight -->
+<section class="mt-20 border-t border-outline-variant pt-12">
+<h3 class="text-headline-lg font-headline-lg text-on-surface mb-6">Public Consensus Insight</h3>
+<div class="bg-primary text-on-primary rounded-2xl p-gutter overflow-hidden relative">
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-gutter">
+<div class="max-w-xl">
+<span class="text-label-sm font-label-sm text-tertiary-fixed uppercase tracking-[0.2em]">Global Trends</span>
+<p class="text-xl font-body-md mt-4 leading-relaxed">Currently, 74% of the community correctly predicted France's current lead. Follow the Leaderboard to see who's dominating the Group Stage predictions.</p>
+</div>
+<button class="bg-secondary text-on-secondary px-8 py-3 rounded-full font-bold uppercase tracking-wider hover:scale-105 transition-transform active:scale-95 shadow-lg">View Leaderboard</button>
+</div>
+<!-- Abstract Stadium Background Pattern -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 24px 24px;"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center px-4 py-3 md:hidden bg-surface-container-highest border-t border-outline-variant z-50 rounded-t-xl shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all gap-1" href="#">
+<span class="material-symbols-outlined">edit_square</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Picks</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full px-5 py-2 scale-110 shadow-md transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sports_soccer</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Results</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all gap-1" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Rank</span>
+</a>
+</nav>
+<script>
+    // Simple micro-interaction for cards
+    document.querySelectorAll('.group, .bg-surface-container-lowest').forEach(card => {
+        card.addEventListener('mousedown', () => {
+            card.style.transform = 'scale(0.98)';
+        });
+        card.addEventListener('mouseup', () => {
+            card.style.transform = 'scale(1)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'scale(1)';
+        });
+    });
+</script>
+
+
+</body></html>

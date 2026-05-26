@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIFA 2026 - Quiniela Mundial El Círculo (Interactive Preview)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  
+  <!-- React and Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;700;800&amp;family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@600&amp;display=swap" rel="stylesheet" />
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+
+  <!-- Tailwind Configuration matching React Project tailwind.config.js -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            "on-error-container": "#93000a",
+            "on-surface-variant": "#444650",
+            "tertiary-fixed-dim": "#e9c400",
+            "on-background": "#191c1d",
+            "secondary-fixed-dim": "#ffb4aa",
+            "on-tertiary-container": "#4c3f00",
+            "surface-container-low": "#f3f4f5",
+            "primary": "#000c2e",
+            "outline-variant": "#c5c6d1",
+            "inverse-primary": "#b3c5ff",
+            "secondary-fixed": "#ffdad5",
+            "on-surface": "#191c1d",
+            "primary-container": "#001f5b",
+            "surface-container-highest": "#e1e3e4",
+            "surface": "#f8f9fa",
+            "outline": "#757681",
+            "on-secondary-fixed-variant": "#930007",
+            "surface-bright": "#f8f9fa",
+            "surface-container-high": "#e7e8e9",
+            "surface-tint": "#465c99",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e1e3e4",
+            "on-tertiary": "#ffffff",
+            "secondary-container": "#e81017",
+            "surface-container": "#edeeef",
+            "primary-fixed": "#dbe1ff",
+            "surface-dim": "#d9dadb",
+            "primary-fixed-dim": "#b3c5ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-container": "#c9a900",
+            "on-secondary-container": "#fffbff",
+            "inverse-surface": "#2e3132",
+            "on-secondary-fixed": "#410001",
+            "on-error": "#ffffff",
+            "tertiary-fixed": "#ffe16d",
+            "tertiary": "#705d00",
+            "error": "#ba1a1a",
+            "secondary": "#bc000c",
+            "on-tertiary-fixed-variant": "#544600",
+            "on-tertiary-fixed": "#221b00",
+            "on-primary-fixed": "#00184a",
+            "on-primary-fixed-variant": "#2d4480",
+            "error-container": "#ffdad6",
+            "on-secondary": "#ffffff",
+            "inverse-on-surface": "#f0f1f2",
+            "background": "#f8f9fa",
+            "on-primary-container": "#7389ca"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "margin-mobile": "16px",
+            "base": "8px",
+            "section-gap": "80px",
+            "margin-desktop": "48px",
+            "gutter": "24px",
+            "stack-sm": "12px",
+            "stack-md": "24px",
+            "stack-lg": "48px",
+            "container-max": "1200px"
+          },
+          fontFamily: {
+            "display-lg": ["Anybody", "sans-serif"],
+            "headline-lg": ["Anybody", "sans-serif"],
+            "headline-md": ["Anybody", "sans-serif"],
+            "body-md": ["Hanken Grotesk", "sans-serif"],
+            "label-sm": ["Space Grotesk", "sans-serif"]
+          },
+          fontSize: {
+            "display-lg-mobile": ["40px", { lineHeight: "44px", letterSpacing: "-0.01em", fontWeight: "800" }],
+            "label-sm": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+            "display-lg": ["64px", { lineHeight: "72px", letterSpacing: "-0.02em", fontWeight: "800" }],
+            "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+            "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+            "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }]
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Global styles -->
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      font-family: 'Hanken Grotesk', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f8f9fa;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c5c6d1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #757681;
+    }
+    /* Remove number input spinners */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .live-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+    .scroll-hide::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+  <div id="root"></div>
+
+  <!-- React Code Block using Babel compiler -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- KEYS ---
+    const USER_SESSION_KEY = 'quiniela_user_session';
+    const SAVED_PREDICTIONS_KEY = 'quiniela_picks_2026';
+
+    // --- MOCK DATA ---
+    const INITIAL_PREDICTIONS = {
+      'usa_aus_home': '',
+      'usa_aus_away': '',
+      'mex_can_home': '2',
+      'mex_can_away': '1',
+    };
+
+    const MATCH_DATA = [
+      {
+        id: 'm1',
+        status: 'LIVE',
+        time: "78'",
+        group: 'Group E',
+        homeTeam: 'France',
+        homeFlag: 'https://flagcdn.com/w160/fr.png',
+        homeScore: 2,
+        awayScore: 1,
+        awayTeam: 'Japan',
+        awayFlag: 'https://flagcdn.com/w160/jp.png',
+        date: 'June 24',
+        type: 'live'
+      },
+      {
+        id: 'm2',
+        status: 'FINISHED',
+        group: 'Group B',
+        homeTeam: 'Brazil',
+        homeFlag: 'https://flagcdn.com/w160/br.png',
+        homeScore: 3,
+        awayScore: 0,
+        awayTeam: 'S. Korea',
+        awayFlag: 'https://flagcdn.com/w160/kr.png',
+        date: 'Yesterday',
+        type: 'finished'
+      },
+      {
+        id: 'm3',
+        status: 'FINISHED',
+        group: 'Group B',
+        homeTeam: 'Spain',
+        homeFlag: 'https://flagcdn.com/w160/es.png',
+        homeScore: 1,
+        awayScore: 1,
+        awayTeam: 'Germany',
+        awayFlag: 'https://flagcdn.com/w160/de.png',
+        date: 'Yesterday',
+        type: 'finished'
+      },
+      {
+        id: 'm4',
+        status: 'FINISHED',
+        group: 'Group C',
+        homeTeam: 'Argentina',
+        homeFlag: 'https://flagcdn.com/w160/ar.png',
+        homeScore: 2,
+        awayScore: 0,
+        awayTeam: 'Mexico',
+        awayFlag: 'https://flagcdn.com/w160/mx.png',
+        date: 'June 23',
+        type: 'finished'
+      },
+      {
+        id: 'm5',
+        status: 'FINISHED',
+        group: 'Group D',
+        homeTeam: 'USA',
+        homeFlag: 'https://flagcdn.com/w160/us.png',
+        homeScore: 0,
+        awayScore: 1,
+        awayTeam: 'England',
+        awayFlag: 'https://flagcdn.com/w160/gb-eng.png',
+        date: 'June 23',
+        type: 'finished'
+      },
+      {
+        id: 'm6',
+        status: 'LIVE',
+        time: "34'",
+        group: 'Group F',
+        homeTeam: 'Portugal',
+        homeFlag: 'https://flagcdn.com/w160/pt.png',
+        homeScore: 0,
+        awayScore: 0,
+        awayTeam: 'Ghana',
+        awayFlag: 'https://flagcdn.com/w160/gh.png',
+        date: 'June 24',
+        type: 'live'
+      }
+    ];
+
+    const INITIAL_LEADERBOARD = [
+      { rank: 4, name: 'Elena Rodriguez', correctResults: 45, correctScores: 8, points: 852, isMe: false, bgClass: 'bg-surface-container-lowest' },
+      { rank: 5, name: 'Marcus Chen', correctResults: 42, correctScores: 11, points: 848, isMe: false, bgClass: 'bg-surface-container-low/30' },
+      { rank: 1248, name: 'Alex Rivers', correctResults: 28, correctScores: 4, points: 512, isMe: true, bgClass: 'bg-secondary-container/5 border-y-2 border-secondary' },
+      { rank: 1249, name: 'John Doe', correctResults: 27, correctScores: 5, points: 510, isMe: false, bgClass: 'bg-surface-container-lowest' }
+    ];
+
+    // --- COMPONENTS ---
+
+    // 1. Navigation Elements (Direct Link simulation with location hashes)
+    function Navbar({ user, activePath, onLogout }) {
+      return (
+        <header className="bg-surface-container-lowest border-b border-outline-variant w-full sticky top-0 z-40">
+          <div className="flex justify-between items-center px-gutter py-4 w-full max-w-container-max mx-auto">
+            <div className="flex items-center gap-8">
+              <a href="#/picks" className="text-headline-lg font-headline-lg text-primary select-none hover:opacity-90">
+                FIFA 2026
+              </a>
+              <nav className="hidden md:flex items-center gap-6">
+                <a 
+                  href="#/picks" 
+                  className={`pb-1 font-body-md text-body-md transition-colors duration-200 ${
+                    activePath === '/picks' 
+                      ? 'text-primary border-b-2 border-primary font-semibold' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Picks
+                </a>
+                <a 
+                  href="#/results" 
+                  className={`pb-1 font-body-md text-body-md transition-colors duration-200 ${
+                    activePath === '/results' 
+                      ? 'text-primary border-b-2 border-secondary font-semibold' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Results
+                </a>
+                <a 
+                  href="#/leaderboard" 
+                  className={`pb-1 font-body-md text-body-md transition-colors duration-200 ${
+                    activePath === '/leaderboard' 
+                      ? 'text-primary border-b-2 border-primary font-semibold' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Leaderboard
+                </a>
+              </nav>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:opacity-80">
+                notifications
+              </button>
+              <button className="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:opacity-80">
+                settings
+              </button>
+              {user && (
+                <div className="group relative">
+                  <img 
+                    alt="User Avatar" 
+                    className="w-10 h-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer hover:border-secondary transition-all" 
+                    src={user.avatar}
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 p-2">
+                    <div className="px-4 py-2 border-b border-outline-variant mb-1">
+                      <p className="text-sm font-bold text-on-surface truncate">{user.name}</p>
+                      <p className="text-xs text-on-surface-variant truncate">{user.email}</p>
+                    </div>
+                    <button 
+                      onClick={onLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surface-container-low rounded-md transition-colors flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">logout</span>
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function BottomNavbar({ activePath }) {
+      return (
+        <nav className="fixed bottom-0 w-full flex justify-around items-center px-4 py-2 md:hidden bg-surface-container shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 rounded-t-xl border-t border-outline-variant">
+          <a 
+            href="#/picks" 
+            className={`flex flex-col items-center justify-center rounded-full px-5 py-1.5 transition-all ${
+              activePath === '/picks' 
+                ? 'bg-primary text-on-primary scale-105 shadow-md' 
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">edit_square</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider mt-0.5">Picks</span>
+          </a>
+
+          <a 
+            href="#/results" 
+            className={`flex flex-col items-center justify-center rounded-full px-5 py-1.5 transition-all ${
+              activePath === '/results' 
+                ? 'bg-primary text-on-primary scale-105 shadow-md' 
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">sports_soccer</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider mt-0.5">Results</span>
+          </a>
+
+          <a 
+            href="#/leaderboard" 
+            className={`flex flex-col items-center justify-center rounded-full px-5 py-1.5 transition-all ${
+              activePath === '/leaderboard' 
+                ? 'bg-primary text-on-primary scale-105 shadow-md' 
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">leaderboard</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider mt-0.5">Rank</span>
+          </a>
+        </nav>
+      );
+    }
+
+    // 2. Login Component
+    function Login({ onLogin }) {
+      const [email, setEmail] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!email) {
+          setError('Por favor ingresa un correo electrónico.');
+          return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setError('Por favor ingresa un correo electrónico válido.');
+          return;
+        }
+        setError('');
+        onLogin(email);
+      };
+
+      const handleSocialLogin = () => {
+        onLogin('alex.rivers@stadium.com');
+      };
+
+      return (
+        <div className="bg-background text-on-background min-h-screen flex flex-col items-center justify-center p-gutter selection:bg-primary-fixed selection:text-on-primary-fixed relative overflow-x-hidden">
+          <main className="w-full max-w-[440px] animate-in fade-in duration-700 slide-in-from-bottom-4 relative z-10">
+            <header className="text-center mb-stack-lg">
+              <div className="inline-flex items-center justify-center mb-4 text-primary">
+                <span className="material-symbols-outlined !text-[48px]" style={{ fontVariationSettings: "'FILL' 1" }}>sports_soccer</span>
+              </div>
+              <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight uppercase animate-bounce">FIFA 2026</h1>
+              <p className="font-body-md text-body-md text-on-surface-variant mt-2">The Official Prediction Platform</p>
+            </header>
+
+            <div className="bg-surface-container-lowest border border-outline-variant p-stack-lg rounded-xl shadow-[0_20px_50px_rgba(0,12,46,0.08)] relative overflow-hidden">
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-secondary/10 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+              
+              <div className="relative z-10 flex flex-col gap-stack-md">
+                <div className="text-center mb-2">
+                  <h2 className="font-headline-lg text-[24px] text-on-surface">Welcome Back</h2>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant mt-1 uppercase tracking-wider">Enter your credentials to continue</p>
+                </div>
+
+                <div className="space-y-3">
+                  <button 
+                    onClick={handleSocialLogin}
+                    className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-surface-container-low border border-outline-variant hover:bg-surface-container-high active:scale-[0.98] transition-all duration-200 rounded-lg group"
+                  >
+                    <img 
+                      alt="Google" 
+                      className="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" 
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4OwMUh2IoTOQQSx993JSWbtfndgilCk7Zi5NGq9FRmsaoIKbncf2I30i8w0Gb1XPZ8oYvznpdqACXGBhZ_2f-QRHRU-kSrtUIR3E0-VFnoBp-fzY6yJiQWkmN1Zg_zWEYGZanSI2tCq9y4Tl-3H8Z1RFPhXXzn9SOLGoAY2i1n9WWbK9GzfUB8MWpoKaof8uNVnx539FofZdXnEqgQr19idp_VcPyYZCvcwFMJiqdMg4knA1BWF9-w2dDbEukGngYrZFa9V5Z55jT"
+                    />
+                    <span className="font-body-md text-body-md text-on-surface font-semibold">Sign in with Google</span>
+                  </button>
+                  <button 
+                    onClick={handleSocialLogin}
+                    className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-primary text-on-primary hover:bg-primary-container active:scale-[0.98] transition-all duration-200 rounded-lg"
+                  >
+                    <span className="material-symbols-outlined !text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>ios</span>
+                    <span className="font-body-md text-body-md font-semibold">Sign in with Apple</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 py-2">
+                  <div className="h-px flex-1 bg-outline-variant"></div>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">OR</span>
+                  <div className="h-px flex-1 bg-outline-variant"></div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="group">
+                    <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 ml-1 group-focus-within:text-primary transition-colors">EMAIL ADDRESS</label>
+                    <input 
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError('');
+                      }}
+                      className="w-full bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg py-3 px-4 text-on-surface outline-none transition-all placeholder:text-outline/50" 
+                      placeholder="name@stadium.com" 
+                    />
+                    {error && <p className="text-red-600 text-xs mt-1 ml-1">{error}</p>}
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-secondary text-on-secondary py-4 font-headline-lg text-[20px] hover:bg-on-secondary-fixed-variant active:scale-[0.98] transition-all duration-200 rounded-lg shadow-md"
+                  >
+                    Continue with Email
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <footer className="mt-stack-lg text-center flex flex-col gap-4">
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                Don't have an account?{' '}
+                <a className="text-secondary font-semibold hover:underline decoration-2 underline-offset-4" href="#">Join the Pitch</a>
+              </p>
+              <nav className="flex justify-center gap-stack-md mt-2">
+                <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">PRIVACY POLICY</a>
+                <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">TERMS OF PLAY</a>
+                <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">SUPPORT</a>
+              </nav>
+            </footer>
+          </main>
+
+          <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-secondary/5"></div>
+            <img 
+              alt="FIFA Stadium Background"
+              className="w-full h-full object-cover opacity-20 contrast-125 saturate-150" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4OwMUh2IoTOQQSx993JSWbtfndgilCk7Zi5NGq9FRmsaoIKbncf2I30i8w0Gb1XPZ8oYvznpdqACXGBhZ_2f-QRHRU-kSrtUIR3E0-VFnoBp-fzY6yJiQWkmN1Zg_zWEYGZanSI2tCq9y4Tl-3H8Z1RFPhXXzn9SOLGoAY2i1n9WWbK9GzfUB8MWpoKaof8uNVnx539FofZdXnEqgQr19idp_VcPyYZCvcwFMJiqdMg4knA1BWF9-w2dDbEukGngYrZFa9V5Z55jT" 
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // 3. Picks Component
+    function Picks({ user, onUpdateStats }) {
+      const [predictions, setPredictions] = useState(() => {
+        const saved = localStorage.getItem(SAVED_PREDICTIONS_KEY);
+        return saved ? JSON.parse(saved) : INITIAL_PREDICTIONS;
+      });
+
+      const [savedMatches, setSavedMatches] = useState({
+        'mex_can': true,
+      });
+
+      const [showToast, setShowToast] = useState(false);
+
+      const handleScoreChange = (matchId, side, value) => {
+        if (value !== '' && (!/^\d+$/.test(value) || parseInt(value, 10) < 0)) return;
+        
+        const key = `${matchId}_${side}`;
+        setPredictions(prev => ({ ...prev, [key]: value }));
+        
+        if (savedMatches[matchId]) {
+          setSavedMatches(prev => ({ ...prev, [matchId]: false }));
+        }
+      };
+
+      const handleSaveAll = () => {
+        localStorage.setItem(SAVED_PREDICTIONS_KEY, JSON.stringify(predictions));
+        const newSaved = { ...savedMatches };
+        
+        if (predictions['usa_aus_home'] !== '' && predictions['usa_aus_away'] !== '') {
+          newSaved['usa_aus'] = true;
+        }
+        if (predictions['mex_can_home'] !== '' && predictions['mex_can_away'] !== '') {
+          newSaved['mex_can'] = true;
+        }
+        setSavedMatches(newSaved);
+
+        let completedCount = 0;
+        if (predictions['usa_aus_home'] !== '' && predictions['usa_aus_away'] !== '') completedCount++;
+        if (predictions['mex_can_home'] !== '' && predictions['mex_can_away'] !== '') completedCount++;
+
+        if (onUpdateStats) {
+          onUpdateStats(completedCount);
+        }
+
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      };
+
+      const savedCount = Object.keys(savedMatches).filter(k => savedMatches[k]).length;
+      const totalPicks = 32;
+      const remainingPicks = Math.max(0, totalPicks - savedCount);
+      const completionPercent = Math.round((savedCount / 3) * 100);
+
+      return (
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-stack-md md:pt-stack-lg min-h-screen pb-32">
+          {showToast && (
+            <div className="fixed top-20 right-6 bg-primary text-on-primary border border-outline-variant px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+              <span className="material-symbols-outlined text-green-500 font-bold">check_circle</span>
+              <span className="font-body-md font-semibold">¡Tus pronósticos han sido guardados con éxito!</span>
+            </div>
+          )}
+
+          <div className="mb-stack-md flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h1 className="text-headline-md md:text-headline-lg font-headline-lg text-on-background mb-2">My Picks</h1>
+              <p className="text-body-md text-on-surface-variant">Submit your predictions for the upcoming Group Stage matches.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="bg-primary text-on-primary px-4 py-1.5 rounded-full text-label-sm font-label-sm uppercase tracking-wide">
+                {remainingPicks} PICKS REMAINING
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <div className="lg:col-span-8 space-y-stack-lg">
+              
+              <section>
+                <div className="flex items-center gap-4 mb-stack-sm">
+                  <span className="text-label-sm font-label-sm bg-primary text-on-primary px-3 py-1 rounded">GROUP A</span>
+                  <div className="h-px bg-outline-variant flex-grow"></div>
+                  <span className="text-label-sm font-label-sm text-on-surface-variant">JUNE 11, 2026</span>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {/* USA vs AUS */}
+                  <div className={`bg-surface-container-lowest border p-gutter rounded-xl transition-all duration-300 ${
+                    savedMatches['usa_aus'] ? 'border-primary shadow-sm' : 'border-outline-variant hover:shadow-[0_4px_20px_-2px_rgba(0,12,46,0.1)]'
+                  }`}>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="USA Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/us.png" />
+                        </div>
+                        <span className="text-headline-md font-headline-md text-on-surface">USA</span>
+                      </div>
+                      
+                      <div className={`flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border transition-all ${
+                        predictions['usa_aus_home'] !== '' || predictions['usa_aus_away'] !== '' ? 'border-secondary ring-2 ring-secondary/10' : 'border-outline-variant'
+                      }`}>
+                        <input 
+                          type="number"
+                          placeholder="0"
+                          value={predictions['usa_aus_home']}
+                          onChange={(e) => handleScoreChange('usa_aus', 'home', e.target.value)}
+                          className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
+                        />
+                        <span className="text-on-surface-variant font-bold text-headline-md">VS</span>
+                        <input 
+                          type="number"
+                          placeholder="0"
+                          value={predictions['usa_aus_away']}
+                          onChange={(e) => handleScoreChange('usa_aus', 'away', e.target.value)}
+                          className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
+                        />
+                      </div>
+                      
+                      <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
+                        <span className="text-headline-md font-headline-md text-on-surface">Australia</span>
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="Australia Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/au.png" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 flex justify-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-label-sm text-on-surface-variant">schedule</span>
+                        <span className="text-label-sm font-label-sm text-on-surface-variant">18:00 LOCAL</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-label-sm text-on-surface-variant">location_on</span>
+                        <span className="text-label-sm font-label-sm text-on-surface-variant">Azteca Stadium</span>
+                      </div>
+                    </div>
+
+                    {savedMatches['usa_aus'] && (
+                      <div className="mt-3 flex justify-center">
+                        <span className="bg-secondary text-on-secondary px-3 py-0.5 rounded-full text-label-sm font-label-sm">SAVED</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mexico vs Canada */}
+                  <div className={`bg-surface-container-lowest border p-gutter rounded-xl transition-all duration-300 ${
+                    savedMatches['mex_can'] ? 'border-primary shadow-sm' : 'border-outline-variant hover:shadow-[0_4px_20px_-2px_rgba(0,12,46,0.1)]'
+                  }`}>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="Mexico Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/mx.png" />
+                        </div>
+                        <span className="text-headline-md font-headline-md text-on-surface">Mexico</span>
+                      </div>
+                      
+                      <div className={`flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border transition-all ${
+                        savedMatches['mex_can'] ? 'border-primary ring-2 ring-primary/10' : 'border-outline-variant'
+                      }`}>
+                        <input 
+                          type="number"
+                          value={predictions['mex_can_home']}
+                          onChange={(e) => handleScoreChange('mex_can', 'home', e.target.value)}
+                          className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
+                        />
+                        <span className="text-on-surface-variant font-bold text-headline-md">VS</span>
+                        <input 
+                          type="number"
+                          value={predictions['mex_can_away']}
+                          onChange={(e) => handleScoreChange('mex_can', 'away', e.target.value)}
+                          className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
+                        />
+                      </div>
+                      
+                      <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
+                        <span className="text-headline-md font-headline-md text-on-surface">Canada</span>
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="Canada Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/ca.png" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {savedMatches['mex_can'] && (
+                      <div className="mt-4 flex justify-center">
+                        <span className="bg-secondary text-on-secondary px-3 py-0.5 rounded-full text-label-sm font-label-sm">SAVED</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center gap-4 mb-stack-sm">
+                  <span className="text-label-sm font-label-sm bg-primary text-on-primary px-3 py-1 rounded">GROUP B</span>
+                  <div className="h-px bg-outline-variant flex-grow"></div>
+                  <span className="text-label-sm font-label-sm text-on-surface-variant">JUNE 12, 2026</span>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-surface-container-low border border-outline-variant p-gutter rounded-xl opacity-80 cursor-not-allowed grayscale">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="France Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/fr.png" />
+                        </div>
+                        <span className="text-headline-md font-headline-md text-on-surface">France</span>
+                      </div>
+                      <div className="flex items-center gap-4 p-2 rounded-xl">
+                        <span className="material-symbols-outlined text-headline-lg text-outline">lock</span>
+                      </div>
+                      <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
+                        <span className="text-headline-md font-headline-md text-on-surface">Argentina</span>
+                        <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                          <img alt="Argentina Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/ar.png" />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-center text-label-sm font-label-sm text-on-surface-variant mt-2 uppercase tracking-wide">Predictions Locked</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="lg:col-span-4 space-y-gutter">
+              <div className="bg-primary text-on-primary p-6 rounded-xl shadow-lg relative overflow-hidden border border-primary-fixed/20">
+                <div className="relative z-10">
+                  <h3 className="text-headline-md font-headline-md mb-4 text-on-primary">Your Ranking</h3>
+                  <div className="flex items-end gap-2 mb-6">
+                    <span className="text-display-lg font-headline-lg leading-none text-tertiary-fixed">
+                      #{user?.rank || 1248}
+                    </span>
+                    <span className="text-body-md opacity-80 pb-2">of 1,240 users</span>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="w-full bg-on-primary/20 h-2 rounded-full">
+                      <div 
+                        className="bg-tertiary-fixed h-full rounded-full shadow-[0_0_8px_rgba(233,196,0,0.5)] transition-all duration-500" 
+                        style={{ width: `${Math.max(10, completionPercent)}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-label-sm font-label-sm opacity-80 uppercase tracking-widest text-white">
+                      Picks Completed: {savedCount} / 3 ({completionPercent}%)
+                    </p>
+                  </div>
+                </div>
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <span className="material-symbols-outlined text-[120px] text-tertiary-fixed">military_tech</span>
+                </div>
+              </div>
+
+              <div className="bg-surface-container-high border border-outline-variant p-6 rounded-xl">
+                <h4 className="text-label-sm font-label-sm text-on-surface-variant mb-4 uppercase tracking-wider">Status Legend</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-secondary animate-pulse"></div>
+                    <span className="text-body-md text-on-surface font-medium">Live</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-primary"></div>
+                    <span className="text-body-md text-on-surface font-medium">Upcoming</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-outline"></div>
+                    <span className="text-body-md text-on-surface font-medium">Finished</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="aspect-square bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden group shadow-sm">
+                <img 
+                  alt="Futuristic Stadium" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-ts_zo1x5pDJIvX3UcYYpxhHPXlaUo2HSgao3wr8RmIb_l-kOT0sEHhSYna8vh3FzW4bovsVdT986ZDWuXSJM-mawcZAvkfUIE46gzqyCwa1VcuXeVk5IYhKqqfUWRiUpWk-D6KXfp2Vp-0LN0DLC_8HBqV0U2zyF6R6uq6eBc7yRoo0apgYcS5LDaQ_qVcEZY0p6oj3iI3rv4LaNugzYdKDI547g6tLg48yu-e0n55yXFToU6khTKVVzijS2rxhsFVPT8HIfrZVL"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleSaveAll}
+            className="fixed bottom-24 md:bottom-8 right-6 bg-secondary text-on-secondary px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all z-40 border border-secondary hover:bg-red-700"
+          >
+            <span className="material-symbols-outlined">save</span>
+            <span className="text-body-md font-bold uppercase tracking-tight">Save All Picks</span>
+          </button>
+        </div>
+      );
+    }
+
+    // 4. Results Component
+    function Results() {
+      const [activeFilter, setActiveFilter] = useState('all');
+
+      const filters = [
+        { id: 'all', label: 'All Days' },
+        { id: 'Yesterday', label: 'Yesterday' },
+        { id: 'June 24', label: 'June 24' },
+        { id: 'June 23', label: 'June 23' },
+      ];
+
+      const filteredMatches = activeFilter === 'all' 
+        ? MATCH_DATA 
+        : MATCH_DATA.filter(m => m.date === activeFilter);
+
+      const completedCount = MATCH_DATA.filter(m => m.status === 'FINISHED').length;
+      const liveCount = MATCH_DATA.filter(m => m.status === 'LIVE').length;
+
+      return (
+        <div className="max-w-7xl mx-auto px-gutter py-8 min-h-screen">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-gutter">
+            <div>
+              <span className="font-label-sm text-label-sm text-secondary uppercase tracking-[0.2em] mb-2 block">Group Stage</span>
+              <h2 className="text-headline-lg font-headline-lg text-on-surface">Match Results</h2>
+              <p className="text-on-surface-variant mt-2 max-w-xl">
+                Track all tournament outcomes. Final scores are verified by FIFA officials. Predictions are locked for completed and live events.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px] shadow-sm">
+                <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Completed</span>
+                <span className="text-2xl font-bold text-primary mt-1">{completedCount} / 64</span>
+              </div>
+              <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px] shadow-sm">
+                <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Live Matches</span>
+                <span className="text-2xl font-bold text-secondary flex items-center gap-2 mt-1">
+                  <span className="w-2.5 h-2.5 bg-secondary rounded-full live-pulse"></span>
+                  {liveCount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mb-8 overflow-x-auto scroll-hide pb-2 border-b border-outline-variant/30">
+            {filters.map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={`px-6 py-2 rounded-full font-label-sm text-label-sm transition-all border uppercase tracking-wider ${
+                  activeFilter === filter.id
+                    ? 'bg-primary text-on-primary border-primary shadow-sm'
+                    : 'bg-surface-container-high text-on-surface hover:bg-surface-variant border-outline-variant'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredMatches.map(match => (
+              <div 
+                key={match.id} 
+                className={`rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 border flex flex-col justify-between ${
+                  match.status === 'LIVE' 
+                    ? 'bg-surface-container-lowest border-secondary/30 hover:shadow-[0_4px_12px_rgba(188,0,12,0.1)]' 
+                    : 'bg-surface border-outline-variant group'
+                }`}
+              >
+                <div className={`px-4 py-1.5 flex justify-between items-center ${
+                  match.status === 'LIVE' ? 'bg-secondary' : 'bg-surface-container-high border-b border-outline-variant'
+                }`}>
+                  <span className={`text-label-sm font-label-sm uppercase flex items-center gap-2 tracking-wider ${
+                    match.status === 'LIVE' ? 'text-on-secondary' : 'text-on-surface-variant'
+                  }`}>
+                    {match.status === 'LIVE' ? (
+                      <>
+                        <span className="w-1.5 h-1.5 bg-on-secondary rounded-full live-pulse"></span>
+                        LIVE • {match.time}
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                        FINISHED
+                      </>
+                    )}
+                  </span>
+                  <span className={`text-label-sm font-label-sm uppercase tracking-wider ${
+                    match.status === 'LIVE' ? 'text-on-secondary opacity-80' : 'text-on-surface-variant'
+                  }`}>
+                    {match.group}
+                  </span>
+                </div>
+
+                <div className="p-gutter flex-grow flex items-center">
+                  <div className="flex items-center justify-between gap-4 w-full">
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden transition-all group-hover:scale-105">
+                        <img alt={match.homeTeam} className="w-full h-full object-cover" src={match.homeFlag} />
+                      </div>
+                      <span className="font-bold text-lg text-center text-on-surface">{match.homeTeam}</span>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-3">
+                        <span className="text-5xl font-display-lg text-primary">{match.homeScore}</span>
+                        <span className="text-on-surface-variant font-bold opacity-30">—</span>
+                        <span className="text-5xl font-display-lg text-primary">{match.awayScore}</span>
+                      </div>
+                      <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+                        {match.status === 'LIVE' ? 'Progress' : 'Full Time'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden transition-all group-hover:scale-105">
+                        <img alt={match.awayTeam} className="w-full h-full object-cover" src={match.awayFlag} />
+                      </div>
+                      <span className="font-bold text-lg text-center text-on-surface">{match.awayTeam}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <section className="mt-20 border-t border-outline-variant pt-12">
+            <h3 className="text-headline-lg font-headline-lg text-on-surface mb-6">Public Consensus Insight</h3>
+            <div className="bg-primary text-on-primary rounded-2xl p-gutter overflow-hidden relative shadow-lg">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-gutter">
+                <div className="max-w-xl">
+                  <span className="text-label-sm font-label-sm text-tertiary-fixed uppercase tracking-[0.2em]">Global Trends</span>
+                  <p className="text-xl font-body-md mt-4 leading-relaxed">
+                    Currently, 74% of the community correctly predicted France's current lead. Follow the Leaderboard to see who's dominating the Group Stage predictions.
+                  </p>
+                </div>
+                <a href="#/leaderboard" className="bg-secondary text-on-secondary px-8 py-3 rounded-full font-bold uppercase tracking-wider hover:scale-105 transition-transform active:scale-95 shadow-lg inline-block text-center">
+                  View Leaderboard
+                </a>
+              </div>
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // 5. Leaderboard Component
+    function Leaderboard({ user }) {
+      const [searchTerm, setSearchTerm] = useState('');
+      
+      const filteredUsers = searchTerm.trim() === ''
+        ? INITIAL_LEADERBOARD
+        : INITIAL_LEADERBOARD.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const myRank = user?.rank || 1248;
+      const myPoints = user?.points || 512;
+
+      return (
+        <div className="pt-8 pb-32 px-4 md:px-gutter max-w-container-max mx-auto min-h-screen">
+          <section className="mb-stack-lg">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter items-end">
+              <div className="md:col-span-8">
+                <span className="text-label-sm font-label-sm text-secondary uppercase tracking-widest block mb-2">Global Standings</span>
+                <h2 className="text-headline-lg md:text-5xl font-display-lg text-on-background mb-4">The Leaderboard</h2>
+                <p className="text-body-md text-on-surface-variant max-w-2xl">
+                  Track your progress against thousands of fans worldwide. Accuracy, consistency, and a deep understanding of the beautiful game will take you to the top.
+                </p>
+              </div>
+              <div className="md:col-span-4 flex flex-col gap-4">
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex items-center justify-between shadow-sm">
+                  <div>
+                    <p className="text-label-sm font-label-sm text-on-surface-variant">Your Rank</p>
+                    <p className="text-headline-lg font-headline-lg text-primary">#{myRank}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-on-secondary-container">trending_up</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-stack-lg">
+            <div className="order-2 md:order-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-surface-container-low rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110"></div>
+              <div className="mb-4 relative">
+                <div className="w-20 h-20 rounded-full border-4 border-slate-300 overflow-hidden shadow-sm">
+                  <img 
+                    alt="Rank 2 Avatar" 
+                    className="w-full h-full object-cover" 
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBENv5vKUaaXHW-uP57ZGtbKE880boMLszPYA8sS2i67ar4iL6Zl7u5J-il6qdatUccGYhmetioW5mfqXS4mguRIw9FS-T9dvDPAYQluY1nEXSUcNqihH-sn7DWAcl14q3idq9LPOBh2wIs59I42EmBL_8VOZN2lbCykgfzWH-7PKrTC1zaOBd4sI0L0qqcD2YsXOzJGbzbPJ8OTQWuvG2rWVP1YO_C13IeSO3tTjLaNlUXxQU9cu1lwEmWcAf_UwRqx8-NWDv-3zzN"
+                  />
+                </div>
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">2ND</span>
+              </div>
+              <h3 className="text-headline-lg font-headline-lg text-lg mb-1">Lucas M.</h3>
+              <p className="text-label-sm font-label-sm text-on-surface-variant">892 Points</p>
+            </div>
+
+            <div className="order-1 md:order-2 bg-primary-container border-2 border-tertiary-fixed rounded-xl p-8 flex flex-col items-center text-center relative overflow-hidden group hover:shadow-xl transition-all duration-300 md:-mt-4">
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+              <div className="mb-6 relative">
+                <div className="w-24 h-24 rounded-full border-4 border-tertiary-fixed overflow-hidden shadow-2xl">
+                  <img 
+                    alt="Rank 1 Avatar" 
+                    className="w-full h-full object-cover" 
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9XpmoNgjFLvJTTbel-c3EzqsMJ8T2Cez40Gftjsrc4p26DZZhykMNi9i37NMI1EOTfyfjQbko_hPpulyauOib0tWsY72dOSezCO8TUosqq6eGW3I_kyszZ9kKeXRdZcmyYlquZPJP8nRCVOTjYzgHswSCARZONG0s2N-GhKdxbY88fjS3nJ_fiXCBgjSN4cL-Ip-jaur3KoK1JZfVnpRgZvAkD2dUEhbXOGnlwaYO_7vjGjFKMsOnbHNJC0lA0Nh1vF7Y763dGgRD"
+                  />
+                </div>
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] px-4 py-1 rounded-full shadow-lg">1ST</span>
+              </div>
+              <h3 className="text-headline-lg font-headline-lg text-on-primary mb-1">Sarah Palmer</h3>
+              <p className="text-label-sm font-label-sm text-on-primary-container uppercase tracking-widest">945 Points • 12 Perfect Scores</p>
+            </div>
+
+            <div className="order-3 md:order-3 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="absolute bottom-0 left-0 w-20 h-20 bg-surface-container-low rounded-tr-full -ml-10 -mb-10 transition-transform group-hover:scale-110"></div>
+              <div className="mb-4 relative">
+                <div className="w-20 h-20 rounded-full border-4 border-orange-400/50 overflow-hidden shadow-sm">
+                  <img 
+                    alt="Rank 3 Avatar" 
+                    className="w-full h-full object-cover" 
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjKKoYW_fGhkgeqlAjuZppScj89jeWkz-WBvlAquuwbmfh5w2N_8SzQQmrDQ8jAvFaJzOACsNrOTCRiMAMfGg0PrLrOr-Dd8Pma97RUatYcQWMir4c34_Vu_Rj5aRyYQNYv4jQFz-PLFkg2sqZH6IBacI5JQ7_MUV3CU88Nq6iyofy6QoTUf6KPkubCCQLfUzMaIb4NerfsnO6avtRSSwuXXnHxomL8KPuTKlY5OzvKeNZ8RZ9CPH51Ct8m_ACIk0drc0_bMlymPc3"
+                  />
+                </div>
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">3RD</span>
+              </div>
+              <h3 className="text-headline-lg font-headline-lg text-lg mb-1">Kenji Sato</h3>
+              <p className="text-label-sm font-label-sm text-on-surface-variant">874 Points</p>
+            </div>
+          </section>
+
+          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h3 className="text-headline-md text-lg text-on-surface">Global Standings</h3>
+              <div className="relative max-w-md w-full">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <input 
+                  type="text" 
+                  placeholder="Buscar participante..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-white border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg py-2 pl-10 pr-4 text-sm text-on-surface outline-none transition-all placeholder:text-outline/70"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto leaderboard-table-scroll">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-primary text-on-primary">
+                    <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider sticky left-0 bg-primary z-10">Rank</th>
+                    <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider">User</th>
+                    <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">Correct Results</th>
+                    <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">Correct Scores</th>
+                    <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-right">Total Points</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant">
+                  {filteredUsers.map((row) => {
+                    const isMe = row.isMe;
+                    return (
+                      <tr 
+                        key={row.rank} 
+                        className={`hover:bg-surface-container-low/50 transition-colors duration-150 ${row.bgClass}`}
+                      >
+                        <td className={`py-4 px-6 font-label-sm text-label-sm sticky left-0 z-10 ${
+                          isMe ? 'bg-white text-secondary font-bold' : 'bg-inherit'
+                        }`}>
+                          {row.rank}
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            {isMe ? (
+                              <div className="w-8 h-8 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center">
+                                <span className="text-[10px] text-on-secondary font-bold">ME</span>
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-surface-container-highest flex-shrink-0"></div>
+                            )}
+                            <div>
+                              <span className={`font-bold ${isMe ? 'text-primary' : 'text-on-surface'}`}>
+                                {isMe ? user?.name || row.name : row.name}
+                              </span>
+                              {isMe && <span className="block text-[10px] uppercase font-label-sm text-secondary">That's you!</span>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-center font-label-sm text-label-sm">
+                          {isMe ? user?.correctResults || row.correctResults : row.correctResults}
+                        </td>
+                        <td className="py-4 px-6 text-center font-label-sm text-label-sm">
+                          {isMe ? user?.correctScores || row.correctScores : row.correctScores}
+                        </td>
+                        <td className={`py-4 px-6 text-right font-bold ${isMe ? 'text-secondary' : 'text-primary'}`}>
+                          {isMe ? myPoints : row.points}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="p-6 border-t border-outline-variant flex justify-center">
+              <button className="bg-primary text-on-primary font-label-sm text-label-sm px-8 py-3 rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-sm">
+                VIEW ALL RANKINGS
+              </button>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    // 6. Core Router and App Controller
+    function App() {
+      const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem(USER_SESSION_KEY);
+        return saved ? JSON.parse(saved) : null;
+      });
+
+      const [activePath, setActivePath] = useState(() => {
+        const hash = window.location.hash.replace('#', '');
+        return hash || '/login';
+      });
+
+      // Simple hash change router
+      useEffect(() => {
+        const handleHashChange = () => {
+          const path = window.location.hash.replace('#', '') || '/login';
+          setActivePath(path);
+        };
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+      }, []);
+
+      // Navigation guardian
+      useEffect(() => {
+        if (!user && activePath !== '/login') {
+          window.location.hash = '#/login';
+        } else if (user && (activePath === '/login' || activePath === '/')) {
+          window.location.hash = '#/picks';
+        }
+      }, [user, activePath]);
+
+      const handleLogin = (email) => {
+        const userData = {
+          name: 'Alex Rivers',
+          email: email,
+          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuACGDivDxEUJntlbinl0hq778O7VOKNXKb6QC7n5e4CqlmSCLylo2lW_Tux00fcPh1jXSVmzgC-ariqDkgucdtWZ9lQmgvo5O0FrwyJL8QE49-sFoGC5juVwL_q7cFiqN9X7zAkyJu08C6eV8QvCiiH0c_MCHQUwUCMiGOoWQ624ESNFhtNKAXfn0L4HrVFKsGZ2BsswLEpYJQLfWxIa-damCJZ8Ro7WDcj_HvMj6LJjc3ZGwCaRFQUNSnlpS5c_q87yh_2Cp39od_u',
+          rank: 1248,
+          points: 512,
+          correctResults: 28,
+          correctScores: 4
+        };
+        setUser(userData);
+        localStorage.setItem(USER_SESSION_KEY, JSON.stringify(userData));
+        window.location.hash = '#/picks';
+      };
+
+      const handleLogout = () => {
+        setUser(null);
+        localStorage.removeItem(USER_SESSION_KEY);
+        window.location.hash = '#/login';
+      };
+
+      const handleUpdateStats = (completedCount) => {
+        if (!user) return;
+        const newPoints = 512 + (completedCount * 10);
+        const newCorrectResults = 28 + completedCount;
+
+        const updatedUser = {
+          ...user,
+          points: newPoints,
+          correctResults: newCorrectResults
+        };
+        setUser(updatedUser);
+        localStorage.setItem(USER_SESSION_KEY, JSON.stringify(updatedUser));
+      };
+
+      const renderRoute = () => {
+        switch (activePath) {
+          case '/picks':
+            return user ? <Picks user={user} onUpdateStats={handleUpdateStats} /> : <Login onLogin={handleLogin} />;
+          case '/results':
+            return user ? <Results /> : <Login onLogin={handleLogin} />;
+          case '/leaderboard':
+            return user ? <Leaderboard user={user} /> : <Login onLogin={handleLogin} />;
+          case '/login':
+          default:
+            return user ? <Picks user={user} onUpdateStats={handleUpdateStats} /> : <Login onLogin={handleLogin} />;
+        }
+      };
+
+      return (
+        <div className="bg-background text-on-surface min-h-screen flex flex-col">
+          {user && <Navbar user={user} activePath={activePath} onLogout={handleLogout} />}
+          
+          <main className="flex-grow">
+            {renderRoute()}
+          </main>
+
+          {user && <BottomNavbar activePath={activePath} />}
+        </div>
+      );
+    }
+
+    // Mount React App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
