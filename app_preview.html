@@ -258,10 +258,10 @@
     ];
 
     const INITIAL_LEADERBOARD = [
-      { rank: 4, name: 'Elena Rodriguez', correctResults: 45, correctScores: 8, points: 852, isMe: false, bgClass: 'bg-surface-container-lowest' },
-      { rank: 5, name: 'Marcus Chen', correctResults: 42, correctScores: 11, points: 848, isMe: false, bgClass: 'bg-surface-container-low/30' },
-      { rank: 1248, name: 'Alex Rivers', correctResults: 28, correctScores: 4, points: 512, isMe: true, bgClass: 'bg-secondary-container/5 border-y-2 border-secondary' },
-      { rank: 1249, name: 'John Doe', correctResults: 27, correctScores: 5, points: 510, isMe: false, bgClass: 'bg-surface-container-lowest' }
+      { rank: 4, name: 'Elena Rodriguez', correctResults: 45, correctScores: 8, points: 852, isMe: false, bgClass: 'bg-surface-container-lowest', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuACGDivDxEUJntlbinl0hq778O7VOKNXKb6QC7n5e4CqlmSCLylo2lW_Tux00fcPh1jXSVmzgC-ariqDkgucdtWZ9lQmgvo5O0FrwyJL8QE49-sFoGC5juVwL_q7cFiqN9X7zAkyJu08C6eV8QvCiiH0c_MCHQUwUCMiGOoWQ624ESNFhtNKAXfn0L4HrVFKsGZ2BsswLEpYJQLfWxIa-damCJZ8Ro7WDcj_HvMj6LJjc3ZGwCaRFQUNSnlpS5c_q87yh_2Cp39od_u' },
+      { rank: 5, name: 'Marcus Chen', correctResults: 42, correctScores: 11, points: 848, isMe: false, bgClass: 'bg-surface-container-low/30', avatar: null },
+      { rank: 1248, name: 'Alex Rivers', correctResults: 28, correctScores: 4, points: 512, isMe: true, bgClass: 'bg-secondary-container/5 border-y-2 border-secondary', avatar: null },
+      { rank: 1249, name: 'John Doe', correctResults: 27, correctScores: 5, points: 510, isMe: false, bgClass: 'bg-surface-container-lowest', avatar: null }
     ];
 
     // --- COMPONENTS ---
@@ -970,9 +970,11 @@
                     <p className="text-label-sm font-label-sm text-on-surface-variant">Your Rank</p>
                     <p className="text-headline-lg font-headline-lg text-primary">#{myRank}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-secondary-container">trending_up</span>
-                  </div>
+                  <img
+                    src={user.avatar}
+                    alt=""
+                    className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover flex-shrink-0"
+                  />
                 </div>
               </div>
             </div>
@@ -1069,12 +1071,12 @@
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
-                            {isMe ? (
-                              <div className="w-8 h-8 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center">
-                                <span className="text-[10px] text-on-secondary font-bold">ME</span>
-                              </div>
+                            {row.avatar ? (
+                              <img src={row.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-surface-container-highest flex-shrink-0"></div>
+                              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isMe ? 'bg-secondary-container' : 'bg-surface-container-highest'}`}>
+                                {isMe && <span className="text-[10px] text-on-secondary font-bold">ME</span>}
+                              </div>
                             )}
                             <div>
                               <span className={`font-bold ${isMe ? 'text-primary' : 'text-on-surface'}`}>

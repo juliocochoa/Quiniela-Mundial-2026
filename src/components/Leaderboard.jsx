@@ -11,7 +11,6 @@ export default function Leaderboard({ user }) {
       const { data, error } = await supabase
         .from('matches')
         .select('*')
-        .lt('match_date', new Date().toISOString())
         .not('home_score', 'is', null)
         .not('away_score', 'is', null);
       if (error) throw new Error(error.message);
@@ -86,6 +85,7 @@ export default function Leaderboard({ user }) {
           userId,
           name: profile?.name || 'Unknown',
           email: profile?.email || '',
+          avatar: profile?.avatar || null,
           points: stats.points,
           correctResults: stats.correctResults,
           correctScores: stats.correctScores,
@@ -134,9 +134,11 @@ export default function Leaderboard({ user }) {
                   <div className="text-right">
                     <p className="text-label-sm font-label-sm text-on-surface-variant">{myEntry.points} pts</p>
                   </div>
-                  <div className="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-secondary-container">trending_up</span>
-                  </div>
+                  <img
+                    src={user.avatar}
+                    alt=""
+                    className="h-10 w-10 rounded-full border-2 border-primary-fixed object-cover flex-shrink-0"
+                  />
                 </div>
               )}
             </div>
@@ -151,7 +153,11 @@ export default function Leaderboard({ user }) {
           <div className="absolute top-0 right-0 w-24 h-24 bg-surface-container-low rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-110"></div>
           <div className="mb-4 relative">
             <div className="w-20 h-20 rounded-full border-4 border-slate-300 overflow-hidden shadow-sm bg-surface-container-highest flex items-center justify-center">
-              <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+              {top3[1]?.avatar ? (
+                <img src={top3[1].avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+              )}
             </div>
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">2ND</span>
           </div>
@@ -164,7 +170,11 @@ export default function Leaderboard({ user }) {
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
           <div className="mb-6 relative">
             <div className="w-24 h-24 rounded-full border-4 border-tertiary-fixed overflow-hidden shadow-2xl bg-surface-container-highest flex items-center justify-center">
-              <span className="material-symbols-outlined text-[40px] text-tertiary">emoji_events</span>
+              {top3[0]?.avatar ? (
+                <img src={top3[0].avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-[40px] text-tertiary">emoji_events</span>
+              )}
             </div>
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] px-4 py-1 rounded-full shadow-lg">1ST</span>
           </div>
@@ -177,7 +187,11 @@ export default function Leaderboard({ user }) {
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-surface-container-low rounded-tr-full -ml-10 -mb-10 transition-transform group-hover:scale-110"></div>
           <div className="mb-4 relative">
             <div className="w-20 h-20 rounded-full border-4 border-orange-400/50 overflow-hidden shadow-sm bg-surface-container-highest flex items-center justify-center">
-              <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+              {top3[2]?.avatar ? (
+                <img src={top3[2].avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+              )}
             </div>
             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">3RD</span>
           </div>
@@ -231,12 +245,12 @@ export default function Leaderboard({ user }) {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        {isMe ? (
-                          <div className="w-8 h-8 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center">
-                            <span className="text-[10px] text-on-secondary font-bold">ME</span>
-                          </div>
+                        {row.avatar ? (
+                          <img src={row.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-surface-container-highest flex-shrink-0"></div>
+                          <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isMe ? 'bg-secondary-container' : 'bg-surface-container-highest'}`}>
+                            {isMe && <span className="text-[10px] text-on-secondary font-bold">ME</span>}
+                          </div>
                         )}
                         <div>
                           <span className={`font-bold ${isMe ? 'text-primary' : 'text-on-surface'}`}>

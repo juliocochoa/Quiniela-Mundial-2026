@@ -129,7 +129,7 @@ export default function App() {
       let role = null;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, avatar')
         .eq('id', session.user.id)
         .single();
 
@@ -141,7 +141,7 @@ export default function App() {
         id: session.user.id,
         name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
         email: session.user.email,
-        avatar: session.user.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuACGDivDxEUJntlbinl0hq778O7VOKNXKb6QC7n5e4CqlmSCLylo2lW_Tux00fcPh1jXSVmzgC-ariqDkgucdtWZ9lQmgvo5O0FrwyJL8QE49-sFoGC5juVwL_q7cFiqN9X7zAkyJu08C6eV8QvCiiH0c_MCHQUwUCMiGOoWQ624ESNFhtNKAXfn0L4HrVFKsGZ2BsswLEpYJQLfWxIa-damCJZ8Ro7WDcj_HvMj6LJjc3ZGwCaRFQUNSnlpS5c_q87yh_2Cp39od_u',
+        avatar: profile?.avatar,
         role,
         rank: 1248,
         points: 512,
