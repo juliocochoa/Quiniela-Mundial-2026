@@ -75,23 +75,25 @@ export default function Results() {
   }, [matches, activeFilter]);
 
   const getMatchStatus = (match) => {
-    if (!match.match_date) return { status: 'FINISHED', time: 'Full Time' };
-    const matchDate = new Date(match.match_date);
-    const now = new Date();
-    const diffMs = matchDate - now;
+    const hasResult = match.home_score != null && match.away_score != null;
 
-    if (diffMs < 0) {
-      if (isSameDay(matchDate, now) && Math.abs(diffMs) < 3 * 60 * 60 * 1000) {
-        return { status: 'LIVE', time: 'Ongoing' };
-      }
+    if (hasResult) {
       return { status: 'FINISHED', time: 'Full Time' };
     }
+
+    if (match.match_date) {
+      const matchDate = new Date(match.match_date);
+      if (isSameDay(matchDate, today)) {
+        return { status: 'LIVE', time: 'Ongoing' };
+      }
+    }
+
     return { status: 'UPCOMING', time: 'Upcoming' };
   };
 
   const completedCount = matches?.filter(m => {
     const s = getMatchStatus(m);
-    return s.status === 'FINISHED' || s.status === 'LIVE';
+    return s.status === 'FINISHED';
   }).length || 0;
 
   const liveCount = matches?.filter(m => getMatchStatus(m).status === 'LIVE').length || 0;
@@ -110,7 +112,7 @@ export default function Results() {
         <div className="flex gap-4">
           <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px] shadow-sm">
             <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Completed</span>
-            <span className="text-2xl font-bold text-primary mt-1">{completedCount} / 64</span>
+            <span className="text-2xl font-bold text-primary mt-1">{completedCount} / {matches?.length || '---'}</span>
           </div>
           <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex flex-col min-w-[140px] shadow-sm">
             <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Live Matches</span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase.js';
 
@@ -96,6 +96,84 @@ export default function Picks({ user, onUpdateStats }) {
       return data;
     }
   });
+
+  // Leaderboard data for rank
+  const { data: pastMatches } = useQuery({
+    queryKey: ['past-matches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .not('home_score', 'is', null)
+        .not('away_score', 'is', null);
+      if (error) throw new Error(error.message);
+      return data;
+    }
+  });
+
+  const { data: allPicks } = useQuery({
+    queryKey: ['all-picks'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('picks').select('*');
+      if (error) throw new Error(error.message);
+      return data;
+    }
+  });
+
+  const { data: profiles } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (error) throw new Error(error.message);
+      return data;
+    }
+  });
+
+  const userRank = useMemo(() => {
+    if (!pastMatches || !allPicks || !profiles) return null;
+
+    const matchMap = {};
+    pastMatches.forEach(m => { matchMap[m.id] = m; });
+
+    const userStats = {};
+    allPicks.forEach(pick => {
+      const match = matchMap[pick.match_id];
+      if (!match) return;
+
+      const aHome = match.home_score;
+      const aAway = match.away_score;
+      const uHome = pick.home_score;
+      const uAway = pick.away_score;
+
+      const isExact = uHome === aHome && uAway === aAway;
+      const actualResult = aHome > aAway ? 'HOME' : aAway > aHome ? 'AWAY' : 'DRAW';
+      const userResult = uHome > uAway ? 'HOME' : uAway > uHome ? 'AWAY' : 'DRAW';
+      const isCorrect = actualResult === userResult;
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = { points: 0, correctResults: 0, correctScores: 0 };
+      }
+
+      if (isExact) {
+        userStats[pick.user_id].points += 2;
+        userStats[pick.user_id].correctScores += 1;
+        userStats[pick.user_id].correctResults += 1;
+      } else if (isCorrect) {
+        userStats[pick.user_id].points += 1;
+        userStats[pick.user_id].correctResults += 1;
+      }
+    });
+
+    const ranked = Object.entries(userStats)
+      .sort((a, b) => b[1].points - a[1].points || b[1].correctScores - a[1].correctScores);
+
+    const userIdx = ranked.findIndex(([uid]) => uid === user?.id);
+
+    return {
+      rank: userIdx >= 0 ? userIdx + 1 : null,
+      total: ranked.length,
+    };
+  }, [pastMatches, allPicks, profiles, user?.id]);
 
   // Group matches by group
   const groupedMatches = matches?.reduce((acc, match) => {
@@ -328,9 +406,9 @@ export default function Picks({ user, onUpdateStats }) {
               <h3 className="text-headline-md font-headline-md mb-4 text-on-primary">Your Ranking</h3>
               <div className="flex items-end gap-2 mb-6">
                 <span className="text-display-lg font-headline-lg leading-none text-tertiary-fixed">
-                  #{user?.rank || 1248}
+                  #{userRank?.rank ?? '---'}
                 </span>
-                <span className="text-body-md opacity-80 pb-2">of 1,240 users</span>
+                <span className="text-body-md opacity-80 pb-2">of {userRank?.total ?? '---'} users</span>
               </div>
               <div className="space-y-4">
                 <div className="w-full bg-on-primary/20 h-2 rounded-full">
