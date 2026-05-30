@@ -1,52 +1,52 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../supabase.js';
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../supabase.js";
 
 export default function Leaderboard({ user }) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: pastMatches } = useQuery({
-    queryKey: ['past-matches'],
+    queryKey: ["past-matches"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .not('home_score', 'is', null)
-        .not('away_score', 'is', null);
+        .from("matches")
+        .select("*")
+        .not("home_score", "is", null)
+        .not("away_score", "is", null);
       if (error) throw new Error(error.message);
       return data;
-    }
+    },
   });
 
   const { data: allPicks } = useQuery({
-    queryKey: ['all-picks'],
+    queryKey: ["all-picks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('picks')
-        .select('*');
+      const { data, error } = await supabase.from("picks").select("*");
       if (error) throw new Error(error.message);
       return data;
-    }
+    },
   });
 
   const { data: profiles } = useQuery({
-    queryKey: ['profiles'],
+    queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase.from("profiles").select("*");
       if (error) throw new Error(error.message);
       return data;
-    }
+    },
   });
 
   const leaderboard = useMemo(() => {
     if (!pastMatches || !allPicks || !profiles) return [];
 
     const matchMap = {};
-    pastMatches.forEach(m => { matchMap[m.id] = m; });
+    pastMatches.forEach((m) => {
+      matchMap[m.id] = m;
+    });
 
     const userStats = {};
 
-    allPicks.forEach(pick => {
+    allPicks.forEach((pick) => {
       const match = matchMap[pick.match_id];
       if (!match) return;
 
@@ -57,12 +57,18 @@ export default function Leaderboard({ user }) {
 
       const isExact = uHome === aHome && uAway === aAway;
 
-      const actualResult = aHome > aAway ? 'HOME' : aAway > aHome ? 'AWAY' : 'DRAW';
-      const userResult = uHome > uAway ? 'HOME' : uAway > uHome ? 'AWAY' : 'DRAW';
+      const actualResult =
+        aHome > aAway ? "HOME" : aAway > aHome ? "AWAY" : "DRAW";
+      const userResult =
+        uHome > uAway ? "HOME" : uAway > uHome ? "AWAY" : "DRAW";
       const isCorrect = actualResult === userResult;
 
       if (!userStats[pick.user_id]) {
-        userStats[pick.user_id] = { points: 0, correctResults: 0, correctScores: 0 };
+        userStats[pick.user_id] = {
+          points: 0,
+          correctResults: 0,
+          correctScores: 0,
+        };
       }
 
       if (isExact) {
@@ -76,22 +82,26 @@ export default function Leaderboard({ user }) {
     });
 
     const profileMap = {};
-    profiles.forEach(p => { profileMap[p.id] = p; });
+    profiles.forEach((p) => {
+      profileMap[p.id] = p;
+    });
 
     const rows = Object.entries(userStats)
       .map(([userId, stats]) => {
         const profile = profileMap[userId];
         return {
           userId,
-          name: profile?.name || 'Unknown',
-          email: profile?.email || '',
+          name: profile?.name || "Unknown",
+          email: profile?.email || "",
           avatar: profile?.avatar || null,
           points: stats.points,
           correctResults: stats.correctResults,
           correctScores: stats.correctScores,
         };
       })
-      .sort((a, b) => b.points - a.points || b.correctScores - a.correctScores)
+      .sort(
+        (a, b) => b.points - a.points || b.correctScores - a.correctScores,
+      )
       .map((row, i) => ({ ...row, rank: i + 1 }));
 
     return rows;
@@ -99,13 +109,13 @@ export default function Leaderboard({ user }) {
 
   const myEntry = useMemo(() => {
     if (!user || !leaderboard.length) return null;
-    return leaderboard.find(e => e.userId === user.id);
+    return leaderboard.find((e) => e.userId === user.id);
   }, [user, leaderboard]);
 
   const filteredUsers = useMemo(() => {
-    if (searchTerm.trim() === '') return leaderboard;
-    return leaderboard.filter(u =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase())
+    if (searchTerm.trim() === "") return leaderboard;
+    return leaderboard.filter((u) =>
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [leaderboard, searchTerm]);
 
@@ -117,22 +127,30 @@ export default function Leaderboard({ user }) {
       <section className="mb-stack-lg animate-in fade-in duration-500">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter items-end">
           <div className="md:col-span-8">
-            <span className="text-label-sm font-label-sm text-secondary uppercase tracking-widest block mb-2">Global Standings</span>
-            <h2 className="text-headline-lg md:text-5xl font-display-lg text-on-background mb-4">The Leaderboard</h2>
+            <h2 className="text-headline-lg md:text-5xl font-display-lg text-on-background mb-4">
+              Tabla de Posiciones
+            </h2>
             <p className="text-body-md text-on-surface-variant max-w-2xl">
-              Track your progress against thousands of fans worldwide. Accuracy, consistency, and a deep understanding of the beautiful game will take you to the top.
+              Haz seguimiento de tu progreso y el de los demás
+              participantes.
             </p>
           </div>
           <div className="md:col-span-4 flex flex-col gap-4">
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow transition-shadow">
               <div>
-                <p className="text-label-sm font-label-sm text-on-surface-variant">Your Rank</p>
-                <p className="text-headline-lg font-headline-lg text-primary">#{myEntry?.rank || '---'}</p>
+                <p className="text-label-sm font-label-sm text-on-surface-variant">
+                  Your Rank
+                </p>
+                <p className="text-headline-lg font-headline-lg text-primary">
+                  #{myEntry?.rank || "---"}
+                </p>
               </div>
               {myEntry && (
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-label-sm font-label-sm text-on-surface-variant">{myEntry.points} pts</p>
+                    <p className="text-label-sm font-label-sm text-on-surface-variant">
+                      {myEntry.points} pts
+                    </p>
                   </div>
                   <img
                     src={user.avatar}
@@ -154,15 +172,27 @@ export default function Leaderboard({ user }) {
           <div className="mb-4 relative">
             <div className="w-20 h-20 rounded-full border-4 border-slate-300 overflow-hidden shadow-sm bg-surface-container-highest flex items-center justify-center">
               {top3[1]?.avatar ? (
-                <img src={top3[1].avatar} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={top3[1].avatar}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">
+                  person
+                </span>
               )}
             </div>
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">2ND</span>
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-400 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">
+              2ND
+            </span>
           </div>
-          <h3 className="text-headline-lg font-headline-lg text-lg mb-1">{top3[1]?.name || '---'}</h3>
-          <p className="text-label-sm font-label-sm text-on-surface-variant">{top3[1]?.points || 0} Points</p>
+          <h3 className="text-headline-lg font-headline-lg text-lg mb-1">
+            {top3[1]?.name || "---"}
+          </h3>
+          <p className="text-label-sm font-label-sm text-on-surface-variant">
+            {top3[1]?.points || 0} Points
+          </p>
         </div>
 
         {/* Rank 1 (Featured) */}
@@ -171,15 +201,28 @@ export default function Leaderboard({ user }) {
           <div className="mb-6 relative">
             <div className="w-24 h-24 rounded-full border-4 border-tertiary-fixed overflow-hidden shadow-2xl bg-surface-container-highest flex items-center justify-center">
               {top3[0]?.avatar ? (
-                <img src={top3[0].avatar} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={top3[0].avatar}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span className="material-symbols-outlined text-[40px] text-tertiary">emoji_events</span>
+                <span className="material-symbols-outlined text-[40px] text-tertiary">
+                  emoji_events
+                </span>
               )}
             </div>
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] px-4 py-1 rounded-full shadow-lg">1ST</span>
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-[10px] px-4 py-1 rounded-full shadow-lg">
+              1ST
+            </span>
           </div>
-          <h3 className="text-headline-lg font-headline-lg text-on-primary mb-1">{top3[0]?.name || '---'}</h3>
-          <p className="text-label-sm font-label-sm text-on-primary-container uppercase tracking-widest">{top3[0]?.points || 0} Points • {top3[0]?.correctScores || 0} Perfect Scores</p>
+          <h3 className="text-headline-lg font-headline-lg text-on-primary mb-1">
+            {top3[0]?.name || "---"}
+          </h3>
+          <p className="text-label-sm font-label-sm text-on-primary-container uppercase tracking-widest">
+            {top3[0]?.points || 0} Points • {top3[0]?.correctScores || 0}{" "}
+            Perfect Scores
+          </p>
         </div>
 
         {/* Rank 3 */}
@@ -188,27 +231,42 @@ export default function Leaderboard({ user }) {
           <div className="mb-4 relative">
             <div className="w-20 h-20 rounded-full border-4 border-orange-400/50 overflow-hidden shadow-sm bg-surface-container-highest flex items-center justify-center">
               {top3[2]?.avatar ? (
-                <img src={top3[2].avatar} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={top3[2].avatar}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">person</span>
+                <span className="material-symbols-outlined text-[32px] text-on-surface-variant">
+                  person
+                </span>
               )}
             </div>
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">3RD</span>
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white font-label-sm text-[10px] px-3 py-0.5 rounded-full">
+              3RD
+            </span>
           </div>
-          <h3 className="text-headline-lg font-headline-lg text-lg mb-1">{top3[2]?.name || '---'}</h3>
-          <p className="text-label-sm font-label-sm text-on-surface-variant">{top3[2]?.points || 0} Points</p>
+          <h3 className="text-headline-lg font-headline-lg text-lg mb-1">
+            {top3[2]?.name || "---"}
+          </h3>
+          <p className="text-label-sm font-label-sm text-on-surface-variant">
+            {top3[2]?.points || 0} Points
+          </p>
         </div>
       </section>
 
       {/* Main Data Table Section */}
       <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-
         {/* Search header bar */}
         <div className="p-4 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h3 className="text-headline-md text-lg text-on-surface select-none">Global Standings</h3>
+          <h3 className="text-headline-md text-lg text-on-surface select-none">
+            Global Standings
+          </h3>
 
           <div className="relative max-w-md w-full">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+              search
+            </span>
             <input
               type="text"
               placeholder="Buscar participante..."
@@ -223,11 +281,21 @@ export default function Leaderboard({ user }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-primary text-on-primary">
-                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider sticky left-0 bg-primary z-10">Rank</th>
-                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider">User</th>
-                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">Correct Results</th>
-                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">Correct Scores</th>
-                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-right">Total Points</th>
+                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider sticky left-0 bg-primary z-10">
+                  Rank
+                </th>
+                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider">
+                  User
+                </th>
+                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">
+                  Correct Results
+                </th>
+                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-center">
+                  Correct Scores
+                </th>
+                <th className="py-4 px-6 font-label-sm text-label-sm uppercase tracking-wider text-right">
+                  Total Points
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant">
@@ -236,27 +304,51 @@ export default function Leaderboard({ user }) {
                 return (
                   <tr
                     key={row.userId}
-                    className={`transition-colors duration-150 ${isMe ? 'bg-secondary-container/5 border-y-2 border-secondary' : 'hover:bg-surface-container-low/50'
-                      }`}
+                    className={`transition-colors duration-150 ${
+                      isMe
+                        ? "bg-secondary-container/5 border-y-2 border-secondary"
+                        : "hover:bg-surface-container-low/50"
+                    }`}
                   >
-                    <td className={`py-4 px-6 font-label-sm text-label-sm sticky left-0 z-10 ${isMe ? 'bg-white text-secondary font-bold' : 'bg-inherit'
-                      }`}>
+                    <td
+                      className={`py-4 px-6 font-label-sm text-label-sm sticky left-0 z-10 ${
+                        isMe
+                          ? "bg-white text-secondary font-bold"
+                          : "bg-inherit"
+                      }`}
+                    >
                       {row.rank}
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         {row.avatar ? (
-                          <img src={row.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                          <img
+                            src={row.avatar}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
                         ) : (
-                          <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isMe ? 'bg-secondary-container' : 'bg-surface-container-highest'}`}>
-                            {isMe && <span className="text-[10px] text-on-secondary font-bold">ME</span>}
+                          <div
+                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${isMe ? "bg-secondary-container" : "bg-surface-container-highest"}`}
+                          >
+                            {isMe && (
+                              <span className="text-[10px] text-on-secondary font-bold">
+                                ME
+                              </span>
+                            )}
                           </div>
                         )}
                         <div>
-                          <span className={`font-bold ${isMe ? 'text-primary' : 'text-on-surface'}`}>
+                          <span
+                            className={`font-bold ${isMe ? "text-primary" : "text-on-surface"}`}
+                          >
                             {row.name}
                           </span>
-                          {isMe && <span className="block text-[10px] uppercase font-label-sm text-secondary">That's you!</span>}
+                          {isMe && (
+                            <span className="block text-[10px] uppercase font-label-sm text-secondary">
+                              That's you!
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -266,7 +358,9 @@ export default function Leaderboard({ user }) {
                     <td className="py-4 px-6 text-center font-label-sm text-label-sm">
                       {row.correctScores}
                     </td>
-                    <td className={`py-4 px-6 text-right font-bold ${isMe ? 'text-secondary' : 'text-primary'}`}>
+                    <td
+                      className={`py-4 px-6 text-right font-bold ${isMe ? "text-secondary" : "text-primary"}`}
+                    >
                       {row.points}
                     </td>
                   </tr>
