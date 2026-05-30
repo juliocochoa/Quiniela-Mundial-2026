@@ -46,18 +46,20 @@ export default function Navbar({ user, onLogout }) {
             >
               Leaderboard
             </NavLink>
-            <NavLink 
-              to="/admin" 
-              className={({ isActive }) => 
-                `pb-1 font-body-md text-body-md transition-colors duration-200 ${
-                  isActive 
-                    ? 'text-primary border-b-2 border-secondary font-semibold font-semibold' 
-                    : 'text-on-surface-variant hover:text-primary'
-                }`
-              }
-            >
-              Admin
-            </NavLink>
+            {user?.role === 'admin' && (
+              <NavLink 
+                to="/admin" 
+                className={({ isActive }) => 
+                  `pb-1 font-body-md text-body-md transition-colors duration-200 ${
+                    isActive 
+                      ? 'text-primary border-b-2 border-secondary font-semibold' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`
+                }
+              >
+                Admin
+              </NavLink>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -80,13 +82,15 @@ export default function Navbar({ user, onLogout }) {
                   <p className="text-sm font-bold text-on-surface truncate">{user.name}</p>
                   <p className="text-xs text-on-surface-variant truncate">{user.email}</p>
                 </div>
-                <NavLink 
-                  to="/admin"
-                  className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-md transition-colors flex items-center gap-2 mb-1"
-                >
-                  <span className="material-symbols-outlined text-[18px]">terminal</span>
-                  Admin Terminal
-                </NavLink>
+                {user?.role === 'admin' && (
+                  <NavLink 
+                    to="/admin"
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-md transition-colors flex items-center gap-2 mb-1"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">terminal</span>
+                    Admin Terminal
+                  </NavLink>
+                )}
                 <button 
                   onClick={onLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surface-container-low rounded-md transition-colors flex items-center gap-2"

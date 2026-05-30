@@ -28,7 +28,7 @@ export default function Results() {
       const { data, error } = await supabase
         .from('matches')
         .select('*')
-        .order('match_date', { ascending: false });
+        .order('match_date', { ascending: true });
       if (error) throw new Error(error.message);
       return data;
     }

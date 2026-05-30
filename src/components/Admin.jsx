@@ -1,88 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../supabase.js';
+import { getCountryCode } from '../utils/countryCodes.js';
 
-const INITIAL_MATCHES = [
-  {
-    id: 'm1',
-    status: 'LIVE',
-    time: "78'",
-    group: 'Group E',
-    homeTeam: 'France',
-    homeFlag: 'https://flagcdn.com/w160/fr.png',
-    homeScore: 2,
-    awayScore: 1,
-    awayTeam: 'Japan',
-    awayFlag: 'https://flagcdn.com/w160/jp.png',
-    date: 'June 24',
-    type: 'live'
-  },
-  {
-    id: 'm2',
-    status: 'FINISHED',
-    group: 'Group B',
-    homeTeam: 'Brazil',
-    homeFlag: 'https://flagcdn.com/w160/br.png',
-    homeScore: 3,
-    awayScore: 0,
-    awayTeam: 'S. Korea',
-    awayFlag: 'https://flagcdn.com/w160/kr.png',
-    date: 'Yesterday',
-    type: 'finished'
-  },
-  {
-    id: 'm3',
-    status: 'FINISHED',
-    group: 'Group B',
-    homeTeam: 'Spain',
-    homeFlag: 'https://flagcdn.com/w160/es.png',
-    homeScore: 1,
-    awayScore: 1,
-    awayTeam: 'Germany',
-    awayFlag: 'https://flagcdn.com/w160/de.png',
-    date: 'Yesterday',
-    type: 'finished'
-  },
-  {
-    id: 'm4',
-    status: 'FINISHED',
-    group: 'Group C',
-    homeTeam: 'Argentina',
-    homeFlag: 'https://flagcdn.com/w160/ar.png',
-    homeScore: 2,
-    awayScore: 0,
-    awayTeam: 'Mexico',
-    awayFlag: 'https://flagcdn.com/w160/mx.png',
-    date: 'June 23',
-    type: 'finished'
-  },
-  {
-    id: 'm5',
-    status: 'FINISHED',
-    group: 'Group D',
-    homeTeam: 'USA',
-    homeFlag: 'https://flagcdn.com/w160/us.png',
-    homeScore: 0,
-    awayScore: 1,
-    awayTeam: 'England',
-    awayFlag: 'https://flagcdn.com/w160/gb-eng.png',
-    date: 'June 23',
-    type: 'finished'
-  },
-  {
-    id: 'm6',
-    status: 'LIVE',
-    time: "34'",
-    group: 'Group F',
-    homeTeam: 'Portugal',
-    homeFlag: 'https://flagcdn.com/w160/pt.png',
-    homeScore: 0,
-    awayScore: 0,
-    awayTeam: 'Ghana',
-    awayFlag: 'https://flagcdn.com/w160/gh.png',
-    date: 'June 24',
-    type: 'live'
-  }
-];
+const formatDateLabel = (date) =>
+  date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+const getDateStr = (date) =>
+  date.toISOString().split('T')[0];
 
 const MOCK_USERS = [
   { id: 1, name: 'Julio Cortázar', email: 'julio@elcirculo.com', rank: 1, points: 742, active: true },
@@ -94,10 +20,11 @@ const MOCK_USERS = [
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('matches'); // matches, system, users, predictions, logs
-  const [matches, setMatches] = useState([]);
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('matches');
   const [activeFilter, setActiveFilter] = useState('all');
   const [users, setUsers] = useState(MOCK_USERS);
+  const [editOverrides, setEditOverrides] = useState({});
   const [systemLogs, setSystemLogs] = useState([
     { time: '19:42:01', msg: 'System initialized. Listening on port 3000.' },
     { time: '19:42:15', msg: 'Supabase client loaded successfully.' },
@@ -105,7 +32,77 @@ export default function Admin() {
   ]);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
-  
+
+  const { data: dbMatches, isLoading } = useQuery({
+    queryKey: ['admin-matches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .order('match_date', { ascending: true });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+  });
+
+  const today = useMemo(() => new Date(), []);
+  const yesterday = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    return d;
+  }, [today]);
+
+  const matches = useMemo(() => {
+    if (!dbMatches) return [];
+    return dbMatches.map(m => {
+      const override = editOverrides[m.id] || {};
+      const matchDate = m.match_date ? new Date(m.match_date) : null;
+      return {
+        id: m.id,
+        group: m.group || 'Group Stage',
+        homeTeam: m.home,
+        awayTeam: m.away,
+        homeScore: override.homeScore ?? m.home_score ?? 0,
+        awayScore: override.awayScore ?? m.away_score ?? 0,
+        status: override.status ?? m.status ?? (m.home_score != null ? 'FINISHED' : 'SCHEDULED'),
+        time: override.time ?? m.time ?? '',
+        date: matchDate ? formatDateLabel(matchDate) : 'TBD',
+        match_date: m.match_date,
+      };
+    });
+  }, [dbMatches, editOverrides]);
+
+  const filters = useMemo(() => {
+    if (!dbMatches) return [
+      { id: 'all', label: 'All Days' },
+      { id: getDateStr(yesterday), label: 'Yesterday' },
+    ];
+
+    const dateSet = new Set();
+    dbMatches.forEach(m => {
+      if (m.match_date) dateSet.add(getDateStr(new Date(m.match_date)));
+    });
+
+    const dateFilters = Array.from(dateSet).sort().reverse().slice(0, 3);
+
+    return [
+      { id: 'all', label: 'All Days' },
+      { id: getDateStr(yesterday), label: 'Yesterday' },
+      ...dateFilters
+        .filter(d => d !== getDateStr(yesterday))
+        .slice(0, 2)
+        .map(d => ({ id: d, label: formatDateLabel(new Date(d + 'T12:00:00')) }))
+    ];
+  }, [dbMatches, yesterday]);
+
+  const filteredMatches = useMemo(() => {
+    if (activeFilter === 'all') return matches;
+    return matches.filter(m => {
+      if (!m.match_date) return false;
+      return getDateStr(new Date(m.match_date)) === activeFilter;
+    });
+  }, [matches, activeFilter]);
+
   // Stats
   const [systemStats, setSystemStats] = useState({
     cpu: 24,
@@ -113,17 +110,6 @@ export default function Admin() {
     dbStatus: 'ONLINE',
     responseTime: 38
   });
-
-  // Load matches from localStorage on mount
-  useEffect(() => {
-    const data = localStorage.getItem('quiniela_matches_data');
-    if (data) {
-      setMatches(JSON.parse(data));
-    } else {
-      setMatches(INITIAL_MATCHES);
-      localStorage.setItem('quiniela_matches_data', JSON.stringify(INITIAL_MATCHES));
-    }
-  }, []);
 
   // Update system stats periodically for retro feeling
   useEffect(() => {
@@ -154,37 +140,47 @@ export default function Admin() {
   const handleScoreChange = (matchId, side, val) => {
     const cleanVal = val === '' ? 0 : parseInt(val, 10);
     if (isNaN(cleanVal) || cleanVal < 0) return;
-
-    setMatches(prev => prev.map(m => {
-      if (m.id === matchId) {
-        return side === 'home' ? { ...m, homeScore: cleanVal } : { ...m, awayScore: cleanVal };
-      }
-      return m;
+    const key = side === 'home' ? 'homeScore' : 'awayScore';
+    setEditOverrides(prev => ({
+      ...prev,
+      [matchId]: { ...prev[matchId], [key]: cleanVal }
     }));
   };
 
   // Handle Match Info (Time / Status / Date)
   const handleMatchPropChange = (matchId, prop, val) => {
-    setMatches(prev => prev.map(m => {
-      if (m.id === matchId) {
-        let updated = { ...m, [prop]: val };
-        // Sync 'type' based on status
-        if (prop === 'status') {
-          if (val === 'FINISHED') updated.type = 'finished';
-          else if (val === 'LIVE') updated.type = 'live';
-          else updated.type = 'scheduled';
-        }
-        return updated;
-      }
-      return m;
+    setEditOverrides(prev => ({
+      ...prev,
+      [matchId]: { ...prev[matchId], [prop]: val }
     }));
   };
 
-  // Save specific match
-  const handleSaveMatch = (match) => {
-    const updatedMatches = matches.map(m => m.id === match.id ? match : m);
-    localStorage.setItem('quiniela_matches_data', JSON.stringify(updatedMatches));
-    setMatches(updatedMatches);
+  // Save specific match to Supabase
+  const handleSaveMatch = async (match) => {
+    const override = editOverrides[match.id] || {};
+    const updates = {};
+    if (override.homeScore !== undefined) updates.home_score = override.homeScore;
+    if (override.awayScore !== undefined) updates.away_score = override.awayScore;
+    if (override.status !== undefined) updates.status = override.status;
+    if (override.time !== undefined) updates.time = override.time;
+
+    const { error } = await supabase
+      .from('matches')
+      .update(updates)
+      .eq('id', match.id);
+
+    if (error) {
+      addLog(`[MATCH_UPDATE_ERROR] ${error.message}`);
+      triggerToast(`Error: ${error.message}`);
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['admin-matches'] });
+    setEditOverrides(prev => {
+      const next = { ...prev };
+      delete next[match.id];
+      return next;
+    });
     addLog(`[MATCH_UPDATE] ${match.homeTeam} ${match.homeScore} - ${match.awayScore} ${match.awayTeam} (Status: ${match.status})`);
     triggerToast(`Partido ${match.homeTeam} vs ${match.awayTeam} guardado.`);
   };
@@ -198,28 +194,16 @@ export default function Admin() {
     triggerToast(`Estado de ${userName} modificado.`);
   };
 
-  // Reboot System (Reset LocalStorage)
+  // Reboot System
   const handleReboot = () => {
-    if (window.confirm("¿Seguro que deseas REINICIAR el sistema de base de datos a los valores de fábrica?")) {
-      localStorage.setItem('quiniela_matches_data', JSON.stringify(INITIAL_MATCHES));
-      setMatches(INITIAL_MATCHES);
+    if (window.confirm("¿Seguro que deseas REINICIAR el sistema?")) {
+      queryClient.invalidateQueries({ queryKey: ['admin-matches'] });
+      setEditOverrides({});
       setUsers(MOCK_USERS);
-      addLog('[SYS_RESET] Base de datos restablecida.');
-      triggerToast('Terminal reiniciado exitosamente.');
+      addLog('[SYS_RESET] Estado local restablecido.');
+      triggerToast('Cache local reiniciado.');
     }
   };
-
-  // Filters
-  const filters = [
-    { id: 'all', label: 'All Days' },
-    { id: 'Yesterday', label: 'Yesterday' },
-    { id: 'June 24', label: 'June 24' },
-    { id: 'June 23', label: 'June 23' },
-  ];
-
-  const filteredMatches = activeFilter === 'all' 
-    ? matches 
-    : matches.filter(m => m.date === activeFilter);
 
   const completedCount = matches.filter(m => m.status === 'FINISHED').length;
   const liveCount = matches.filter(m => m.status === 'LIVE').length;
@@ -247,65 +231,60 @@ export default function Admin() {
         <nav className="flex-grow py-4">
           <ul className="space-y-1">
             <li className="px-4">
-              <button 
-                onClick={() => setActiveTab('system')} 
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
-                  activeTab === 'system' 
-                    ? 'bg-primary-container/40 text-white border-l-2 border-white' 
-                    : 'text-[#7389ca] hover:bg-primary-container/20'
-                }`}
+              <button
+                onClick={() => setActiveTab('system')}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${activeTab === 'system'
+                  ? 'bg-primary-container/40 text-white border-l-2 border-white'
+                  : 'text-[#7389ca] hover:bg-primary-container/20'
+                  }`}
               >
                 <span className="material-symbols-outlined">dns</span>
                 <span className="text-xs">System</span>
               </button>
             </li>
             <li className="px-4">
-              <button 
-                onClick={() => setActiveTab('users')} 
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
-                  activeTab === 'users' 
-                    ? 'bg-primary-container/40 text-white border-l-2 border-white' 
-                    : 'text-[#7389ca] hover:bg-primary-container/20'
-                }`}
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${activeTab === 'users'
+                  ? 'bg-primary-container/40 text-white border-l-2 border-white'
+                  : 'text-[#7389ca] hover:bg-primary-container/20'
+                  }`}
               >
                 <span className="material-symbols-outlined">group</span>
                 <span className="text-xs">Users</span>
               </button>
             </li>
             <li className="px-4">
-              <button 
-                onClick={() => setActiveTab('predictions')} 
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
-                  activeTab === 'predictions' 
-                    ? 'bg-primary-container/40 text-white border-l-2 border-white' 
-                    : 'text-[#7389ca] hover:bg-primary-container/20'
-                }`}
+              <button
+                onClick={() => setActiveTab('predictions')}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${activeTab === 'predictions'
+                  ? 'bg-primary-container/40 text-white border-l-2 border-white'
+                  : 'text-[#7389ca] hover:bg-primary-container/20'
+                  }`}
               >
                 <span className="material-symbols-outlined">query_stats</span>
                 <span className="text-xs">Predictions</span>
               </button>
             </li>
             <li className="px-4">
-              <button 
-                onClick={() => setActiveTab('matches')} 
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
-                  activeTab === 'matches' 
-                    ? 'bg-secondary text-white font-bold border-l-4 border-white shadow-[0_0_15px_rgba(188,0,12,0.4)]' 
-                    : 'text-[#7389ca] hover:bg-primary-container/20'
-                }`}
+              <button
+                onClick={() => setActiveTab('matches')}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${activeTab === 'matches'
+                  ? 'bg-secondary text-white font-bold border-l-4 border-white shadow-[0_0_15px_rgba(188,0,12,0.4)]'
+                  : 'text-[#7389ca] hover:bg-primary-container/20'
+                  }`}
               >
                 <span className="material-symbols-outlined">sports_soccer</span>
                 <span className="text-xs">Matches</span>
               </button>
             </li>
             <li className="px-4">
-              <button 
-                onClick={() => setActiveTab('logs')} 
-                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
-                  activeTab === 'logs' 
-                    ? 'bg-primary-container/40 text-white border-l-2 border-white' 
-                    : 'text-[#7389ca] hover:bg-primary-container/20'
-                }`}
+              <button
+                onClick={() => setActiveTab('logs')}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${activeTab === 'logs'
+                  ? 'bg-primary-container/40 text-white border-l-2 border-white'
+                  : 'text-[#7389ca] hover:bg-primary-container/20'
+                  }`}
               >
                 <span className="material-symbols-outlined">terminal</span>
                 <span className="text-xs">Logs</span>
@@ -314,7 +293,7 @@ export default function Admin() {
           </ul>
         </nav>
         <div className="p-4 border-t border-[#7389ca]/30">
-          <button 
+          <button
             onClick={handleReboot}
             className="w-full py-3 bg-secondary text-white font-bold tracking-tighter hover:brightness-110 transition-all border border-white/20 text-xs"
           >
@@ -322,9 +301,9 @@ export default function Admin() {
           </button>
         </div>
         <div className="p-6 space-y-2">
-          <a 
+          <a
             onClick={(e) => { e.preventDefault(); navigate('/results'); }}
-            className="flex items-center gap-2 text-[10px] text-[#7389ca] hover:text-white cursor-pointer" 
+            className="flex items-center gap-2 text-[10px] text-[#7389ca] hover:text-white cursor-pointer"
             href="#"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span> Back to Web
@@ -334,7 +313,7 @@ export default function Admin() {
 
       {/* Main Content Area */}
       <main className="ml-64 p-8 min-h-screen pb-20">
-        
+
         {/* MATCHES TAB */}
         {activeTab === 'matches' && (
           <div className="animate-in fade-in duration-300">
@@ -365,132 +344,136 @@ export default function Admin() {
             {/* Filters */}
             <div className="flex gap-3 mb-10 overflow-x-auto pb-2">
               {filters.map(f => (
-                <button 
+                <button
                   key={f.id}
                   onClick={() => setActiveFilter(f.id)}
-                  className={`px-6 py-2 font-mono text-xs uppercase tracking-widest transition-all ${
-                    activeFilter === f.id ? 'terminal-tab-active' : 'terminal-tab hover:bg-primary-container/40'
-                  }`}
+                  className={`px-6 py-2 font-mono text-xs uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === f.id ? 'terminal-tab-active' : 'terminal-tab hover:bg-primary-container/40'
+                    }`}
                 >
                   {f.label}
                 </button>
               ))}
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredMatches.map(match => (
-                <div 
-                  key={match.id}
-                  className={`terminal-border bg-primary-container/10 overflow-hidden relative group transition-all duration-300 ${
-                    match.status === 'LIVE' ? 'shadow-[0_0_15px_rgba(115,137,202,0.2)]' : ''
-                  }`}
-                >
-                  {/* Card Header */}
-                  <div className={`px-4 py-1.5 flex justify-between items-center ${
-                    match.status === 'LIVE' ? 'bg-secondary' : 'bg-[#7389ca]/20 border-b border-[#7389ca]/30'
-                  }`}>
-                    <span className="text-[10px] font-mono text-white uppercase flex items-center gap-2 tracking-widest">
-                      {match.status === 'LIVE' ? (
-                        <>
-                          <span className="w-1.5 h-1.5 bg-white rounded-full live-pulse"></span>
-                          LIVE
-                        </>
-                      ) : match.status === 'FINISHED' ? (
-                        'FINISHED'
-                      ) : (
-                        'UPCOMING'
-                      )}
-                    </span>
-                    <span className="text-[10px] font-mono text-white/80 uppercase tracking-widest">{match.group}</span>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-6">
-                    <div className="flex items-center justify-between gap-4">
-                      {/* Home Team */}
-                      <div className="flex flex-col items-center flex-1">
-                        <div className="w-14 h-10 border border-[#7389ca]/50 mb-3 overflow-hidden">
-                          <img alt={match.homeTeam} className="w-full h-full object-cover" src={match.homeFlag} />
-                        </div>
-                        <span className="font-bold text-xs uppercase tracking-widest text-white truncate max-w-[80px]">{match.homeTeam}</span>
-                      </div>
-
-                      {/* Inputs & Score */}
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="number" 
-                            min="0"
-                            value={match.homeScore}
-                            onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
-                            className="w-12 h-12 text-center text-xl font-bold bg-[#000c2e] border border-[#7389ca] text-white focus:ring-1 focus:ring-secondary rounded"
-                          />
-                          <span className="text-[#7389ca] font-light text-xl">:</span>
-                          <input 
-                            type="number" 
-                            min="0"
-                            value={match.awayScore}
-                            onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
-                            className="w-12 h-12 text-center text-xl font-bold bg-[#000c2e] border border-[#7389ca] text-white focus:ring-1 focus:ring-secondary rounded"
-                          />
-                        </div>
-                        
-                        {/* Time modifier (if Live) */}
+            {/* Loading */}
+            {isLoading ? (
+              <div className="flex justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              /* Grid */
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredMatches.map(match => (
+                  <div
+                    key={match.id}
+                    className={`terminal-border bg-primary-container/10 overflow-hidden relative group transition-all duration-300 ${match.status === 'LIVE' ? 'shadow-[0_0_15px_rgba(115,137,202,0.2)]' : ''
+                      }`}
+                  >
+                    {/* Card Header */}
+                    <div className={`px-4 py-1.5 flex justify-between items-center ${match.status === 'LIVE' ? 'bg-secondary' : 'bg-[#7389ca]/20 border-b border-[#7389ca]/30'
+                      }`}>
+                      <span className="text-[10px] font-mono text-white uppercase flex items-center gap-2 tracking-widest">
                         {match.status === 'LIVE' ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-mono text-[#7389ca]">TIME:</span>
-                            <input 
-                              type="text"
-                              value={match.time}
-                              onChange={(e) => handleMatchPropChange(match.id, 'time', e.target.value)}
-                              className="w-14 h-5 px-1 py-0 text-[10px] text-center font-mono bg-[#000c2e] border border-[#7389ca]/50 text-secondary"
+                          <>
+                            <span className="w-1.5 h-1.5 bg-white rounded-full live-pulse"></span>
+                            LIVE
+                          </>
+                        ) : match.status === 'FINISHED' ? (
+                          'FINISHED'
+                        ) : (
+                          'UPCOMING'
+                        )}
+                      </span>
+                      <span className="text-[10px] font-mono text-white/80 uppercase tracking-widest">{match.group}</span>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-6">
+                      <div className="flex items-center justify-between gap-4">
+                        {/* Home Team */}
+                        <div className="flex flex-col items-center flex-1">
+                          <div className="w-14 h-10 border border-[#7389ca]/50 mb-3 overflow-hidden">
+                            <img alt={match.homeTeam} className="w-full h-full object-cover" src={`https://flagcdn.com/w160/${getCountryCode(match.homeTeam)}.png`} />
+                          </div>
+                          <span className="font-bold text-xs uppercase tracking-widest text-white truncate max-w-[80px]">{match.homeTeam}</span>
+                        </div>
+
+                        {/* Inputs & Score */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="0"
+                              value={match.homeScore}
+                              onChange={(e) => handleScoreChange(match.id, 'home', e.target.value)}
+                              className="w-12 h-12 text-center text-xl font-bold bg-[#000c2e] border border-[#7389ca] text-white focus:ring-1 focus:ring-secondary rounded"
+                            />
+                            <span className="text-[#7389ca] font-light text-xl">:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={match.awayScore}
+                              onChange={(e) => handleScoreChange(match.id, 'away', e.target.value)}
+                              className="w-12 h-12 text-center text-xl font-bold bg-[#000c2e] border border-[#7389ca] text-white focus:ring-1 focus:ring-secondary rounded"
                             />
                           </div>
-                        ) : (
-                          <span className="text-[9px] font-mono text-[#7389ca] uppercase tracking-widest">{match.status}</span>
-                        )}
-                      </div>
 
-                      {/* Away Team */}
-                      <div className="flex flex-col items-center flex-1">
-                        <div className="w-14 h-10 border border-[#7389ca]/50 mb-3 overflow-hidden">
-                          <img alt={match.awayTeam} className="w-full h-full object-cover" src={match.awayFlag} />
+                          {/* Time modifier (if Live) */}
+                          {match.status === 'LIVE' ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-mono text-[#7389ca]">TIME:</span>
+                              <input
+                                type="text"
+                                value={match.time}
+                                onChange={(e) => handleMatchPropChange(match.id, 'time', e.target.value)}
+                                className="w-14 h-5 px-1 py-0 text-[10px] text-center font-mono bg-[#000c2e] border border-[#7389ca]/50 text-secondary"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-[9px] font-mono text-[#7389ca] uppercase tracking-widest">{match.status}</span>
+                          )}
                         </div>
-                        <span className="font-bold text-xs uppercase tracking-widest text-white truncate max-w-[80px]">{match.awayTeam}</span>
+
+                        {/* Away Team */}
+                        <div className="flex flex-col items-center flex-1">
+                          <div className="w-14 h-10 border border-[#7389ca]/50 mb-3 overflow-hidden">
+                            <img alt={match.awayTeam} className="w-full h-full object-cover" src={`https://flagcdn.com/w160/${getCountryCode(match.awayTeam)}.png`} />
+                          </div>
+                          <span className="font-bold text-xs uppercase tracking-widest text-white truncate max-w-[80px]">{match.awayTeam}</span>
+                        </div>
+                      </div>
+
+                      {/* Status modifier dropdown */}
+                      <div className="mt-5 flex gap-2 items-center justify-between border-t border-[#7389ca]/20 pt-4">
+                        <select
+                          value={match.status}
+                          onChange={(e) => handleMatchPropChange(match.id, 'status', e.target.value)}
+                          className="bg-[#000c2e] text-[#7389ca] border border-[#7389ca]/50 rounded text-[10px] font-mono p-1 flex-grow mr-2"
+                        >
+                          <option value="SCHEDULED">SCHEDULED</option>
+                          <option value="LIVE">LIVE</option>
+                          <option value="FINISHED">FINISHED</option>
+                        </select>
+                        <button
+                          onClick={() => handleSaveMatch(match)}
+                          className="px-3 py-1 bg-secondary text-white text-[10px] font-mono uppercase font-bold tracking-widest hover:bg-red-700 transition-colors"
+                        >
+                          COMMIT
+                        </button>
                       </div>
                     </div>
 
-                    {/* Status modifier dropdown */}
-                    <div className="mt-5 flex gap-2 items-center justify-between border-t border-[#7389ca]/20 pt-4">
-                      <select 
-                        value={match.status}
-                        onChange={(e) => handleMatchPropChange(match.id, 'status', e.target.value)}
-                        className="bg-[#000c2e] text-[#7389ca] border border-[#7389ca]/50 rounded text-[10px] font-mono p-1 flex-grow mr-2"
-                      >
-                        <option value="SCHEDULED">SCHEDULED</option>
-                        <option value="LIVE">LIVE</option>
-                        <option value="FINISHED">FINISHED</option>
-                      </select>
-                      <button 
-                        onClick={() => handleSaveMatch(match)}
-                        className="px-3 py-1 bg-secondary text-white text-[10px] font-mono uppercase font-bold tracking-widest hover:bg-red-700 transition-colors"
-                      >
-                        COMMIT
-                      </button>
+                    {/* Card Footer */}
+                    <div className="bg-[#000c2e] px-4 py-1 text-[9px] flex justify-between border-t border-[#7389ca]/30 font-mono text-[#7389ca]">
+                      <span>EVT_ID: {match.id && match.id}-{match.group.slice(-1)}</span>
+                      <span>{match.date.toUpperCase()}</span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
 
-                  {/* Card Footer */}
-                  <div className="bg-[#000c2e] px-4 py-1 text-[9px] flex justify-between border-t border-[#7389ca]/30 font-mono text-[#7389ca]">
-                    <span>EVT_ID: {match.id.toUpperCase()}-{match.group.slice(-1)}</span>
-                    <span>{match.date.toUpperCase()}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {filteredMatches.length === 0 && (
+            {!isLoading && filteredMatches.length === 0 && (
               <div className="text-center py-20 text-[#7389ca] font-mono text-sm border border-dashed border-[#7389ca]/30 mt-6">
                 [SYS_WARNING]: No matches found for this date node.
               </div>
@@ -614,18 +597,16 @@ export default function Admin() {
                       <td className="p-4">{usr.email}</td>
                       <td className="p-4 text-secondary font-bold">{usr.points} PTS</td>
                       <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 text-[9px] font-bold ${
-                          usr.active ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'
-                        }`}>
+                        <span className={`px-2 py-0.5 text-[9px] font-bold ${usr.active ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                          }`}>
                           {usr.active ? 'VERIFIED' : 'SUSPENDED'}
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <button 
+                        <button
                           onClick={() => handleToggleUser(usr.id, usr.name)}
-                          className={`px-3 py-1 font-mono text-[9px] uppercase font-bold tracking-tighter ${
-                            usr.active ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
+                          className={`px-3 py-1 font-mono text-[9px] uppercase font-bold tracking-tighter ${usr.active ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-green-600 text-white hover:bg-green-700'
+                            }`}
                         >
                           {usr.active ? 'Disable' : 'Enable'}
                         </button>
@@ -724,7 +705,7 @@ export default function Admin() {
             <div className="terminal-border bg-primary-container/10 p-6">
               <div className="flex justify-between items-center border-b border-[#7389ca]/30 pb-3 mb-4">
                 <span className="font-mono text-xs text-white">LOG STREAM LIST</span>
-                <button 
+                <button
                   onClick={() => setSystemLogs([])}
                   className="px-3 py-1 border border-secondary text-secondary hover:bg-secondary hover:text-white transition-colors font-mono text-[9px] font-bold uppercase tracking-wider"
                 >
