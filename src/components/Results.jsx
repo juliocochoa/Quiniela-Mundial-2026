@@ -1,114 +1,100 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../supabase.js';
+import { getCountryCode } from '../utils/countryCodes.js';
 
-const MATCH_DATA = [
-  {
-    id: 'm1',
-    status: 'LIVE',
-    time: "78'",
-    group: 'Group E',
-    homeTeam: 'France',
-    homeFlag: 'https://flagcdn.com/w160/fr.png',
-    homeScore: 2,
-    awayScore: 1,
-    awayTeam: 'Japan',
-    awayFlag: 'https://flagcdn.com/w160/jp.png',
-    date: 'June 24',
-    type: 'live'
-  },
-  {
-    id: 'm2',
-    status: 'FINISHED',
-    group: 'Group B',
-    homeTeam: 'Brazil',
-    homeFlag: 'https://flagcdn.com/w160/br.png',
-    homeScore: 3,
-    awayScore: 0,
-    awayTeam: 'S. Korea',
-    awayFlag: 'https://flagcdn.com/w160/kr.png',
-    date: 'Yesterday',
-    type: 'finished'
-  },
-  {
-    id: 'm3',
-    status: 'FINISHED',
-    group: 'Group B',
-    homeTeam: 'Spain',
-    homeFlag: 'https://flagcdn.com/w160/es.png',
-    homeScore: 1,
-    awayScore: 1,
-    awayTeam: 'Germany',
-    awayFlag: 'https://flagcdn.com/w160/de.png',
-    date: 'Yesterday',
-    type: 'finished'
-  },
-  {
-    id: 'm4',
-    status: 'FINISHED',
-    group: 'Group C',
-    homeTeam: 'Argentina',
-    homeFlag: 'https://flagcdn.com/w160/ar.png',
-    homeScore: 2,
-    awayScore: 0,
-    awayTeam: 'Mexico',
-    awayFlag: 'https://flagcdn.com/w160/mx.png',
-    date: 'June 23',
-    type: 'finished'
-  },
-  {
-    id: 'm5',
-    status: 'FINISHED',
-    group: 'Group D',
-    homeTeam: 'USA',
-    homeFlag: 'https://flagcdn.com/w160/us.png',
-    homeScore: 0,
-    awayScore: 1,
-    awayTeam: 'England',
-    awayFlag: 'https://flagcdn.com/w160/gb-eng.png',
-    date: 'June 23',
-    type: 'finished'
-  },
-  {
-    id: 'm6',
-    status: 'LIVE',
-    time: "34'",
-    group: 'Group F',
-    homeTeam: 'Portugal',
-    homeFlag: 'https://flagcdn.com/w160/pt.png',
-    homeScore: 0,
-    awayScore: 0,
-    awayTeam: 'Ghana',
-    awayFlag: 'https://flagcdn.com/w160/gh.png',
-    date: 'June 24',
-    type: 'live'
-  }
-];
+const formatDateLabel = (date) =>
+  date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+const getDateStr = (date) =>
+  date.toISOString().split('T')[0];
+
+const isSameDay = (dateA, dateB) =>
+  getDateStr(dateA) === getDateStr(dateB);
 
 export default function Results() {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [matches, setMatches] = useState([]);
 
-  useEffect(() => {
-    const data = localStorage.getItem('quiniela_matches_data');
-    if (data) {
-      setMatches(JSON.parse(data));
-    } else {
-      setMatches(MATCH_DATA);
+  const today = useMemo(() => new Date(), []);
+  const yesterday = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    return d;
+  }, [today]);
+
+  const { data: matches, isLoading, error } = useQuery({
+    queryKey: ['results-matches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .order('match_date', { ascending: false });
+      if (error) throw new Error(error.message);
+      return data;
     }
-  }, []);
+  });
 
-  const filters = [
-    { id: 'all', label: 'All Days' },
-    { id: 'Yesterday', label: 'Yesterday' },
-    { id: 'June 24', label: 'June 24' },
-    { id: 'June 23', label: 'June 23' },
-  ];
+  const filters = useMemo(() => {
+    if (!matches) return [
+      { id: 'all', label: 'All Days' },
+      { id: getDateStr(yesterday), label: 'Yesterday' },
+    ];
 
-  const filteredMatches = activeFilter === 'all' 
-    ? matches 
-    : matches.filter(m => m.date === activeFilter);
+    const dateSet = new Set();
+    matches.forEach(m => {
+      if (m.match_date) dateSet.add(getDateStr(new Date(m.match_date)));
+    });
 
-  const completedCount = matches.filter(m => m.status === 'FINISHED').length;
-  const liveCount = matches.filter(m => m.status === 'LIVE').length;
+    const dateFilters = Array.from(dateSet)
+      .sort()
+      .reverse()
+      .slice(0, 3);
+
+    return [
+      { id: 'all', label: 'All Days' },
+      { id: getDateStr(yesterday), label: 'Yesterday' },
+      ...dateFilters
+        .filter(d => d !== getDateStr(yesterday))
+        .slice(0, 2)
+        .map(d => ({ id: d, label: formatDateLabel(new Date(d + 'T12:00:00')) }))
+    ];
+  }, [matches, yesterday]);
+
+  const filteredMatches = useMemo(() => {
+    if (!matches) return [];
+
+    if (activeFilter === 'all') {
+      return matches.slice(0, 10);
+    }
+
+    return matches.filter(m => {
+      if (!m.match_date) return false;
+      const matchDate = new Date(m.match_date);
+      return getDateStr(matchDate) === activeFilter;
+    });
+  }, [matches, activeFilter]);
+
+  const getMatchStatus = (match) => {
+    if (!match.match_date) return { status: 'FINISHED', time: 'Full Time' };
+    const matchDate = new Date(match.match_date);
+    const now = new Date();
+    const diffMs = matchDate - now;
+
+    if (diffMs < 0) {
+      if (isSameDay(matchDate, now) && Math.abs(diffMs) < 3 * 60 * 60 * 1000) {
+        return { status: 'LIVE', time: 'Ongoing' };
+      }
+      return { status: 'FINISHED', time: 'Full Time' };
+    }
+    return { status: 'UPCOMING', time: 'Upcoming' };
+  };
+
+  const completedCount = matches?.filter(m => {
+    const s = getMatchStatus(m);
+    return s.status === 'FINISHED' || s.status === 'LIVE';
+  }).length || 0;
+
+  const liveCount = matches?.filter(m => getMatchStatus(m).status === 'LIVE').length || 0;
 
   return (
     <div className="max-w-7xl mx-auto px-gutter py-8 min-h-screen">
@@ -142,7 +128,7 @@ export default function Results() {
           <button
             key={filter.id}
             onClick={() => setActiveFilter(filter.id)}
-            className={`px-6 py-2 rounded-full font-label-sm text-label-sm transition-all border uppercase tracking-wider ${
+            className={`px-6 py-2 rounded-full font-label-sm text-label-sm transition-all border uppercase tracking-wider whitespace-nowrap ${
               activeFilter === filter.id
                 ? 'bg-primary text-on-primary border-primary shadow-sm'
                 : 'bg-surface-container-high text-on-surface hover:bg-surface-variant border-outline-variant'
@@ -154,39 +140,51 @@ export default function Results() {
       </div>
 
       {/* Results Grid */}
+      {isLoading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 text-red-700 p-4 rounded-xl">
+          Error loading matches: {error.message}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredMatches.map(match => (
+        {filteredMatches.map(match => {
+          const matchStatus = getMatchStatus(match);
+          const isLive = matchStatus.status === 'LIVE';
+          return (
           <div 
             key={match.id} 
             className={`rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 border flex flex-col justify-between ${
-              match.status === 'LIVE' 
+              isLive
                 ? 'bg-surface-container-lowest border-secondary/30 hover:shadow-[0_4px_12px_rgba(188,0,12,0.1)]' 
                 : 'bg-surface border-outline-variant group'
             }`}
           >
             {/* Header portion */}
             <div className={`px-4 py-1.5 flex justify-between items-center ${
-              match.status === 'LIVE' ? 'bg-secondary' : 'bg-surface-container-high border-b border-outline-variant'
+              isLive ? 'bg-secondary' : 'bg-surface-container-high border-b border-outline-variant'
             }`}>
               <span className={`text-label-sm font-label-sm uppercase flex items-center gap-2 tracking-wider ${
-                match.status === 'LIVE' ? 'text-on-secondary' : 'text-on-surface-variant'
+                isLive ? 'text-on-secondary' : 'text-on-surface-variant'
               }`}>
-                {match.status === 'LIVE' ? (
+                {isLive ? (
                   <>
                     <span className="w-1.5 h-1.5 bg-on-secondary rounded-full live-pulse"></span>
-                    LIVE • {match.time}
+                    LIVE • {matchStatus.time}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                    FINISHED
+                    {matchStatus.status}
                   </>
                 )}
               </span>
               <span className={`text-label-sm font-label-sm uppercase tracking-wider ${
-                match.status === 'LIVE' ? 'text-on-secondary opacity-80' : 'text-on-surface-variant'
+                isLive ? 'text-on-secondary opacity-80' : 'text-on-surface-variant'
               }`}>
-                {match.group}
+                {match.group || 'Group Stage'}
               </span>
             </div>
 
@@ -196,34 +194,35 @@ export default function Results() {
                 {/* Home Team */}
                 <div className="flex flex-col items-center flex-1">
                   <div className="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden transition-all group-hover:scale-105">
-                    <img alt={match.homeTeam} className="w-full h-full object-cover" src={match.homeFlag} />
+                    <img alt={match.home} className="w-full h-full object-cover" src={`https://flagcdn.com/w160/${getCountryCode(match.home)}.png`} />
                   </div>
-                  <span className="font-bold text-lg text-center text-on-surface">{match.homeTeam}</span>
+                  <span className="font-bold text-lg text-center text-on-surface">{match.home}</span>
                 </div>
 
                 {/* Score Column */}
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-3">
-                    <span className="text-5xl font-display-lg text-primary">{match.homeScore}</span>
+                    <span className="text-5xl font-display-lg text-primary">{match.home_score ?? '-'}</span>
                     <span className="text-on-surface-variant font-bold opacity-30">—</span>
-                    <span className="text-5xl font-display-lg text-primary">{match.awayScore}</span>
+                    <span className="text-5xl font-display-lg text-primary">{match.away_score ?? '-'}</span>
                   </div>
                   <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
-                    {match.status === 'LIVE' ? 'Progress' : 'Full Time'}
+                    {matchStatus.time}
                   </span>
                 </div>
 
                 {/* Away Team */}
                 <div className="flex flex-col items-center flex-1">
                   <div className="w-16 h-16 rounded-full border border-outline-variant shadow-sm mb-3 overflow-hidden transition-all group-hover:scale-105">
-                    <img alt={match.awayTeam} className="w-full h-full object-cover" src={match.awayFlag} />
+                    <img alt={match.away} className="w-full h-full object-cover" src={`https://flagcdn.com/w160/${getCountryCode(match.away)}.png`} />
                   </div>
-                  <span className="font-bold text-lg text-center text-on-surface">{match.awayTeam}</span>
+                  <span className="font-bold text-lg text-center text-on-surface">{match.away}</span>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {filteredMatches.length === 0 && (
           <div className="col-span-full py-12 text-center text-on-surface-variant font-body-md">
@@ -231,6 +230,7 @@ export default function Results() {
           </div>
         )}
       </div>
+      )}
 
       {/* Section: Public Prediction Insight */}
       <section className="mt-20 border-t border-outline-variant pt-12">
