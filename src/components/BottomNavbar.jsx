@@ -45,6 +45,20 @@ export default function BottomNavbar() {
         <span className="material-symbols-outlined text-[22px]">leaderboard</span>
         <span className="text-[10px] font-semibold uppercase tracking-wider mt-0.5">Rank</span>
       </NavLink>
+
+      <NavLink 
+        to="/admin" 
+        className={({ isActive }) => 
+          `flex flex-col items-center justify-center rounded-full px-5 py-1.5 transition-all ${
+            isActive 
+              ? 'bg-primary text-on-primary scale-105 shadow-md' 
+              : 'text-on-surface-variant hover:text-primary'
+          }`
+        }
+      >
+        <span className="material-symbols-outlined text-[22px]">terminal</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider mt-0.5">Admin</span>
+      </NavLink>
     </nav>
   );
 }

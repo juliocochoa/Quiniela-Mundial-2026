@@ -7,6 +7,90 @@ import Login from './components/Login';
 import Picks from './components/Picks';
 import Results from './components/Results';
 import Leaderboard from './components/Leaderboard';
+import Admin from './components/Admin';
+
+const INITIAL_MATCHES = [
+  {
+    id: 'm1',
+    status: 'LIVE',
+    time: "78'",
+    group: 'Group E',
+    homeTeam: 'France',
+    homeFlag: 'https://flagcdn.com/w160/fr.png',
+    homeScore: 2,
+    awayScore: 1,
+    awayTeam: 'Japan',
+    awayFlag: 'https://flagcdn.com/w160/jp.png',
+    date: 'June 24',
+    type: 'live'
+  },
+  {
+    id: 'm2',
+    status: 'FINISHED',
+    group: 'Group B',
+    homeTeam: 'Brazil',
+    homeFlag: 'https://flagcdn.com/w160/br.png',
+    homeScore: 3,
+    awayScore: 0,
+    awayTeam: 'S. Korea',
+    awayFlag: 'https://flagcdn.com/w160/kr.png',
+    date: 'Yesterday',
+    type: 'finished'
+  },
+  {
+    id: 'm3',
+    status: 'FINISHED',
+    group: 'Group B',
+    homeTeam: 'Spain',
+    homeFlag: 'https://flagcdn.com/w160/es.png',
+    homeScore: 1,
+    awayScore: 1,
+    awayTeam: 'Germany',
+    awayFlag: 'https://flagcdn.com/w160/de.png',
+    date: 'Yesterday',
+    type: 'finished'
+  },
+  {
+    id: 'm4',
+    status: 'FINISHED',
+    group: 'Group C',
+    homeTeam: 'Argentina',
+    homeFlag: 'https://flagcdn.com/w160/ar.png',
+    homeScore: 2,
+    awayScore: 0,
+    awayTeam: 'Mexico',
+    awayFlag: 'https://flagcdn.com/w160/mx.png',
+    date: 'June 23',
+    type: 'finished'
+  },
+  {
+    id: 'm5',
+    status: 'FINISHED',
+    group: 'Group D',
+    homeTeam: 'USA',
+    homeFlag: 'https://flagcdn.com/w160/us.png',
+    homeScore: 0,
+    awayScore: 1,
+    awayTeam: 'England',
+    awayFlag: 'https://flagcdn.com/w160/gb-eng.png',
+    date: 'June 23',
+    type: 'finished'
+  },
+  {
+    id: 'm6',
+    status: 'LIVE',
+    time: "34'",
+    group: 'Group F',
+    homeTeam: 'Portugal',
+    homeFlag: 'https://flagcdn.com/w160/pt.png',
+    homeScore: 0,
+    awayScore: 0,
+    awayTeam: 'Ghana',
+    awayFlag: 'https://flagcdn.com/w160/gh.png',
+    date: 'June 24',
+    type: 'live'
+  }
+];
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -14,6 +98,13 @@ export default function App() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // Initialize matches in localStorage if not present
+    if (!localStorage.getItem('quiniela_matches_data')) {
+      localStorage.setItem('quiniela_matches_data', JSON.stringify(INITIAL_MATCHES));
+    }
+  }, []);
 
   useEffect(() => {
     // 1. Obtener la sesión actual al cargar
@@ -114,6 +205,11 @@ export default function App() {
             path="/leaderboard" 
             element={user ? <Leaderboard user={user} /> : <Navigate to="/login" />} 
           />
+          <Route 
+            path="/admin" 
+            element={user ? <Admin /> : <Navigate to="/login" />} 
+          />
+
           {/* Fallback routing */}
           <Route 
             path="*" 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const MATCH_DATA = [
   {
@@ -85,6 +85,16 @@ const MATCH_DATA = [
 
 export default function Results() {
   const [activeFilter, setActiveFilter] = useState('all');
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    const data = localStorage.getItem('quiniela_matches_data');
+    if (data) {
+      setMatches(JSON.parse(data));
+    } else {
+      setMatches(MATCH_DATA);
+    }
+  }, []);
 
   const filters = [
     { id: 'all', label: 'All Days' },
@@ -94,11 +104,11 @@ export default function Results() {
   ];
 
   const filteredMatches = activeFilter === 'all' 
-    ? MATCH_DATA 
-    : MATCH_DATA.filter(m => m.date === activeFilter);
+    ? matches 
+    : matches.filter(m => m.date === activeFilter);
 
-  const completedCount = MATCH_DATA.filter(m => m.status === 'FINISHED').length;
-  const liveCount = MATCH_DATA.filter(m => m.status === 'LIVE').length;
+  const completedCount = matches.filter(m => m.status === 'FINISHED').length;
+  const liveCount = matches.filter(m => m.status === 'LIVE').length;
 
   return (
     <div className="max-w-7xl mx-auto px-gutter py-8 min-h-screen">
