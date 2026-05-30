@@ -14,7 +14,7 @@ export default function Navbar({ user, onLogout, onUpdateProfile }) {
               to="/"
               className="text-headline-lg font-headline-lg text-primary select-none hover:opacity-90"
             >
-              FIFA 2026
+              Quiniela Mundial 2026
             </NavLink>
             <nav className="hidden md:flex items-center gap-6">
               <NavLink
