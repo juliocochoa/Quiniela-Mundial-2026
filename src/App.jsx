@@ -129,7 +129,7 @@ export default function App() {
       let role = null;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, avatar')
+        .select('role, avatar, name')
         .eq('id', session.user.id)
         .single();
 
@@ -139,7 +139,7 @@ export default function App() {
 
       setUser({
         id: session.user.id,
-        name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+        name: profile?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0],
         email: session.user.email,
         avatar: profile?.avatar,
         role,
@@ -158,6 +158,10 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
+  };
+
+  const handleUpdateProfile = (updates) => {
+    setUser((prev) => ({ ...prev, ...updates }));
   };
 
   // Update Stats when saving predictions (Mock update for UI testing)
@@ -195,7 +199,7 @@ export default function App() {
 
   return (
     <div className="bg-background text-on-surface min-h-screen flex flex-col">
-      {user && <Navbar user={user} onLogout={handleLogout} />}
+      {user && <Navbar user={user} onLogout={handleLogout} onUpdateProfile={handleUpdateProfile} />}
 
       <main className="flex-grow">
         <Routes>

@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import ProfileEditModal from './ProfileEditModal';
 
-export default function Navbar({ user, onLogout }) {
+export default function Navbar({ user, onLogout, onUpdateProfile }) {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   return (
+    <>
     <header className="bg-surface-container-lowest border-b border-outline-variant w-full sticky top-0 z-40">
       <div className="flex justify-between items-center px-gutter py-4 w-full max-w-container-max mx-auto">
         <div className="flex items-center gap-8">
@@ -63,16 +67,22 @@ export default function Navbar({ user, onLogout }) {
           <button className="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:opacity-80">
             notifications
           </button>
-          <button className="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:opacity-80">
+          <button onClick={() => setIsProfileOpen(true)} className="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all active:opacity-80">
             settings
           </button>
           {user && (
             <div className="group relative">
-              <img
-                alt="User Avatar"
-                className="w-10 h-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer hover:border-secondary transition-all"
-                src={user.avatar}
-              />
+              {user.avatar ? (
+                <img
+                  alt="User Avatar"
+                  className="w-10 h-10 rounded-full border-2 border-primary-fixed object-cover cursor-pointer hover:border-secondary transition-all"
+                  src={user.avatar}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full border-2 border-primary-fixed bg-primary/10 flex items-center justify-center cursor-pointer hover:border-secondary transition-all">
+                  <span className="text-sm font-bold text-primary">{user.name?.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
               {/* Dropdown for logout */}
               <div className="absolute right-0 mt-2 w-48 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 p-2">
                 <div className="px-4 py-2 border-b border-outline-variant mb-1">
@@ -101,5 +111,14 @@ export default function Navbar({ user, onLogout }) {
         </div>
       </div>
     </header>
+      {user && (
+        <ProfileEditModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          user={user}
+          onUpdateProfile={onUpdateProfile}
+        />
+      )}
+    </>
   );
 }
