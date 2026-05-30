@@ -33,7 +33,7 @@ export default function Leaderboard({ user }) {
   const { data: profiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profile').select('*');
+      const { data, error } = await supabase.from('profiles').select('*');
       if (error) throw new Error(error.message);
       return data;
     }
@@ -130,14 +130,14 @@ export default function Leaderboard({ user }) {
                 <p className="text-headline-lg font-headline-lg text-primary">#{myEntry?.rank || '---'}</p>
               </div>
               {myEntry && (
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-label-sm font-label-sm text-on-surface-variant">{myEntry.points} pts</p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-label-sm font-label-sm text-on-surface-variant">{myEntry.points} pts</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-on-secondary-container">trending_up</span>
+                  </div>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center">
-                  <span className="material-symbols-outlined text-on-secondary-container">trending_up</span>
-                </div>
-              </div>
               )}
             </div>
           </div>
@@ -188,15 +188,15 @@ export default function Leaderboard({ user }) {
 
       {/* Main Data Table Section */}
       <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        
+
         {/* Search header bar */}
         <div className="p-4 border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h3 className="text-headline-md text-lg text-on-surface select-none">Global Standings</h3>
-          
+
           <div className="relative max-w-md w-full">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Buscar participante..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -220,15 +220,13 @@ export default function Leaderboard({ user }) {
               {filteredUsers.map((row) => {
                 const isMe = row.userId === user?.id;
                 return (
-                  <tr 
-                    key={row.userId} 
-                    className={`transition-colors duration-150 ${
-                      isMe ? 'bg-secondary-container/5 border-y-2 border-secondary' : 'hover:bg-surface-container-low/50'
-                    }`}
+                  <tr
+                    key={row.userId}
+                    className={`transition-colors duration-150 ${isMe ? 'bg-secondary-container/5 border-y-2 border-secondary' : 'hover:bg-surface-container-low/50'
+                      }`}
                   >
-                    <td className={`py-4 px-6 font-label-sm text-label-sm sticky left-0 z-10 ${
-                      isMe ? 'bg-white text-secondary font-bold' : 'bg-inherit'
-                    }`}>
+                    <td className={`py-4 px-6 font-label-sm text-label-sm sticky left-0 z-10 ${isMe ? 'bg-white text-secondary font-bold' : 'bg-inherit'
+                      }`}>
                       {row.rank}
                     </td>
                     <td className="py-4 px-6">
