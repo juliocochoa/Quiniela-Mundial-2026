@@ -1,28 +1,109 @@
 import React, { useState, useEffect } from 'react';
-
-const INITIAL_PREDICTIONS = {
-  // USA vs Australia
-  'usa_aus_home': '',
-  'usa_aus_away': '',
-  // Mexico vs Canada
-  'mex_can_home': '2',
-  'mex_can_away': '1',
-};
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../supabase.js';
 
 const SAVED_PREDICTIONS_KEY = 'quiniela_picks_2026';
 
+import { getCountryCode } from '../utils/countryCodes.js';
+
+const getTimeRemaining = (matchDateStr, now) => {
+  if (!matchDateStr) return '';
+  const matchDate = new Date(matchDateStr);
+  const diffMs = matchDate - now;
+
+  if (diffMs <= 0) {
+    return 'Cerrado';
+  }
+
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffDays > 0) {
+    return `Cierra en ${diffDays}d ${diffHours}h`;
+  }
+  if (diffHours > 0) {
+    return `Cierra en ${diffHours}h ${diffMinutes}m`;
+  }
+  return `Cierra en ${diffMinutes}m`;
+};
+
 export default function Picks({ user, onUpdateStats }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [predictions, setPredictions] = useState(() => {
     const saved = localStorage.getItem(SAVED_PREDICTIONS_KEY);
-    return saved ? JSON.parse(saved) : INITIAL_PREDICTIONS;
+    return saved ? JSON.parse(saved) : {};
   });
 
-  const [savedMatches, setSavedMatches] = useState({
-    'mex_can': true, // Mexico vs Canada is pre-saved in the mock
+  const queryClient = useQueryClient();
+
+  const { data: apiPicks } = useQuery({
+    queryKey: ['picks', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('picks')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    enabled: !!user?.id
   });
 
+  useEffect(() => {
+    if (apiPicks && apiPicks.length > 0) {
+      setPredictions(prev => {
+        const newPredictions = { ...prev };
+        apiPicks.forEach(pick => {
+          newPredictions[`${pick.match_id}_home`] = pick.home_score;
+          newPredictions[`${pick.match_id}_away`] = pick.away_score;
+        });
+        return newPredictions;
+      });
+
+      setSavedMatches(prev => {
+        const newSaved = { ...prev };
+        apiPicks.forEach(pick => {
+          newSaved[pick.match_id] = true;
+        });
+        return newSaved;
+      });
+    }
+  }, [apiPicks]);
+
+  const [savedMatches, setSavedMatches] = useState({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Fetch matches from Supabase
+  const { data: matches, isLoading, error } = useQuery({
+    queryKey: ['matches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .order('match_date', { ascending: true });
+      
+      if (error) throw new Error(error.message);
+      return data;
+    }
+  });
+
+  // Group matches by group
+  const groupedMatches = matches?.reduce((acc, match) => {
+    const group = match.group || 'Unknown';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(match);
+    return acc;
+  }, {}) || {};
 
   // Handle score change
   const handleScoreChange = (matchId, side, value) => {
@@ -47,31 +128,50 @@ export default function Picks({ user, onUpdateStats }) {
   };
 
   // Save all picks
-  const handleSaveAll = () => {
-    localStorage.setItem(SAVED_PREDICTIONS_KEY, JSON.stringify(predictions));
+  const handleSaveAll = async () => {
+    const newPicksToSave = [];
     
-    // Mark matches as saved if both scores are filled
-    const newSaved = { ...savedMatches };
-    
-    // Check USA vs Aus
-    if (predictions['usa_aus_home'] !== '' && predictions['usa_aus_away'] !== '') {
-      newSaved['usa_aus'] = true;
+    if (matches) {
+      matches.forEach(match => {
+        const matchId = match.id || `${match.home}_${match.away}`;
+        const homeScore = predictions[`${matchId}_home`];
+        const awayScore = predictions[`${matchId}_away`];
+        
+        const alreadyInApi = apiPicks?.find(p => p.match_id === matchId);
+        
+        if (!alreadyInApi && homeScore !== '' && homeScore !== undefined && awayScore !== '' && awayScore !== undefined) {
+          newPicksToSave.push({
+            user_id: user.id,
+            match_id: matchId,
+            home_score: parseInt(homeScore, 10),
+            away_score: parseInt(awayScore, 10)
+          });
+        }
+      });
     }
-    // Check Mex vs Can
-    if (predictions['mex_can_home'] !== '' && predictions['mex_can_away'] !== '') {
-      newSaved['mex_can'] = true;
+
+    if (newPicksToSave.length === 0) {
+      setToastMessage('No hay pronósticos nuevos para guardar.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      return;
     }
+
+    const { error } = await supabase.from('picks').insert(newPicksToSave);
+
+    if (error) {
+      console.error('Error saving picks:', error);
+      setToastMessage('Hubo un error guardando tus pronósticos.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['picks', user?.id] });
     
-    setSavedMatches(newSaved);
-
-    // Calculate number of completed picks
-    let completedCount = 0;
-    if (predictions['usa_aus_home'] !== '' && predictions['usa_aus_away'] !== '') completedCount++;
-    if (predictions['mex_can_home'] !== '' && predictions['mex_can_away'] !== '') completedCount++;
-
-    // Trigger state updates up to parent to update points/stats if appropriate
     if (onUpdateStats) {
-      onUpdateStats(completedCount);
+      const totalSaved = (apiPicks?.length || 0) + newPicksToSave.length;
+      onUpdateStats(totalSaved);
     }
 
     setToastMessage('¡Tus pronósticos han sido guardados con éxito!');
@@ -81,10 +181,9 @@ export default function Picks({ user, onUpdateStats }) {
 
   // Calculations
   const savedCount = Object.keys(savedMatches).filter(k => savedMatches[k]).length;
-  // Let's assume total group matches is 32. Remaining picks:
-  const totalPicks = 32;
+  const totalPicks = matches ? matches.length : 0;
   const remainingPicks = Math.max(0, totalPicks - savedCount);
-  const completionPercent = Math.round((savedCount / 3) * 100); // 3 total matches shown in component mock (including the locked one)
+  const completionPercent = totalPicks > 0 ? Math.round((savedCount / totalPicks) * 100) : 0;
 
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-gutter pt-stack-md md:pt-stack-lg min-h-screen pb-32">
@@ -113,200 +212,112 @@ export default function Picks({ user, onUpdateStats }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
         {/* Main Content Area: Match List */}
         <div className="lg:col-span-8 space-y-stack-lg">
-          
-          {/* Group A Section */}
-          <section>
-            <div className="flex items-center gap-4 mb-stack-sm">
-              <span className="text-label-sm font-label-sm bg-primary text-on-primary px-3 py-1 rounded">GROUP A</span>
-              <div className="h-px bg-outline-variant flex-grow"></div>
-              <span className="text-label-sm font-label-sm text-on-surface-variant">JUNE 11, 2026</span>
+          {isLoading ? (
+            <div className="flex justify-center p-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-              
-              {/* Match Card 1: USA vs Australia */}
-              <div 
-                className={`bg-surface-container-lowest border p-gutter rounded-xl transition-all duration-300 ${
-                  savedMatches['usa_aus'] 
-                    ? 'border-primary shadow-sm' 
-                    : 'border-outline-variant hover:shadow-[0_4px_20px_-2px_rgba(0,12,46,0.1)]'
-                }`}
-              >
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  {/* Team 1 */}
-                  <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img 
-                        alt="USA Flag" 
-                        className="w-full h-full object-cover" 
-                        src="https://flagcdn.com/w160/us.png"
-                      />
-                    </div>
-                    <span className="text-headline-md font-headline-md text-on-surface">USA</span>
-                  </div>
-                  
-                  {/* Input Section */}
-                  <div 
-                    className={`flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border transition-all ${
-                      predictions['usa_aus_home'] !== '' || predictions['usa_aus_away'] !== '' 
-                        ? 'border-secondary ring-2 ring-secondary/10' 
-                        : 'border-outline-variant'
-                    }`}
-                  >
-                    <input 
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={predictions['usa_aus_home']}
-                      onChange={(e) => handleScoreChange('usa_aus', 'home', e.target.value)}
-                      className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
-                    />
-                    <span className="text-on-surface-variant font-bold text-headline-md">VS</span>
-                    <input 
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={predictions['usa_aus_away']}
-                      onChange={(e) => handleScoreChange('usa_aus', 'away', e.target.value)}
-                      className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
-                    />
-                  </div>
-                  
-                  {/* Team 2 */}
-                  <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
-                    <span className="text-headline-md font-headline-md text-on-surface">Australia</span>
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img 
-                        alt="Australia Flag" 
-                        className="w-full h-full object-cover" 
-                        src="https://flagcdn.com/w160/au.png"
-                      />
-                    </div>
-                  </div>
+          ) : error ? (
+            <div className="bg-red-100 text-red-700 p-4 rounded-xl">
+              Error loading matches: {error.message}
+            </div>
+          ) : (
+            Object.entries(groupedMatches).sort().map(([group, groupMatches]) => (
+              <section key={group}>
+                <div className="flex items-center gap-4 mb-stack-sm">
+                  <span className="text-label-sm font-label-sm bg-primary text-on-primary px-3 py-1 rounded uppercase">GROUP {group}</span>
+                  <div className="h-px bg-outline-variant flex-grow"></div>
+                  <span className="text-label-sm font-label-sm text-on-surface-variant">
+                    {groupMatches[0]?.match_date ? new Date(groupMatches[0].match_date).toLocaleDateString() : 'TBD'}
+                  </span>
                 </div>
                 
-                <div className="mt-4 flex justify-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-label-sm text-on-surface-variant">schedule</span>
-                    <span className="text-label-sm font-label-sm text-on-surface-variant">18:00 LOCAL</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-label-sm text-on-surface-variant">location_on</span>
-                    <span className="text-label-sm font-label-sm text-on-surface-variant">Azteca Stadium</span>
-                  </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {groupMatches.map((match) => {
+                    const matchId = match.id || `${match.home}_${match.away}`;
+                    const isSaved = savedMatches[matchId];
+                    const isSavedInApi = apiPicks?.some(p => p.match_id === matchId);
+                    return (
+                      <div 
+                        key={matchId}
+                        className={`bg-surface-container-lowest border p-gutter rounded-xl transition-all duration-300 ${
+                          isSaved 
+                            ? 'border-primary shadow-sm' 
+                            : 'border-outline-variant hover:shadow-[0_4px_20px_-2px_rgba(0,12,46,0.1)]'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                          <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
+                            <div className="w-12 h-12 flex-shrink-0 shadow-sm rounded-full overflow-hidden border border-outline-variant/30">
+                              <img src={`https://flagcdn.com/${getCountryCode(match.home)}.svg`} alt={`${match.home} flag`} className="w-full h-full object-cover" />
+                            </div>
+                            <span className="text-headline-md font-headline-md text-on-surface">{match.home}</span>
+                          </div>
+                          
+                          <div 
+                            className={`flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border transition-all ${
+                              predictions[`${matchId}_home`] !== '' && predictions[`${matchId}_home`] !== undefined || 
+                              predictions[`${matchId}_away`] !== '' && predictions[`${matchId}_away`] !== undefined
+                                ? 'border-secondary ring-2 ring-secondary/10' 
+                                : 'border-outline-variant'
+                            }`}
+                          >
+                            <input 
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              disabled={isSavedInApi}
+                              value={predictions[`${matchId}_home`] !== undefined ? predictions[`${matchId}_home`] : ''}
+                              onChange={(e) => handleScoreChange(matchId, 'home', e.target.value)}
+                              className={`w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all ${isSavedInApi ? 'opacity-50 cursor-not-allowed bg-surface-container-low' : ''}`}
+                            />
+                            <span className="text-on-surface-variant font-bold text-headline-md">VS</span>
+                            <input 
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              disabled={isSavedInApi}
+                              value={predictions[`${matchId}_away`] !== undefined ? predictions[`${matchId}_away`] : ''}
+                              onChange={(e) => handleScoreChange(matchId, 'away', e.target.value)}
+                              className={`w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all ${isSavedInApi ? 'opacity-50 cursor-not-allowed bg-surface-container-low' : ''}`}
+                            />
+                          </div>
+                          
+                          <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
+                            <span className="text-headline-md font-headline-md text-on-surface">{match.away}</span>
+                            <div className="w-12 h-12 flex-shrink-0 shadow-sm rounded-full overflow-hidden border border-outline-variant/30">
+                              <img src={`https://flagcdn.com/${getCountryCode(match.away)}.svg`} alt={`${match.away} flag`} className="w-full h-full object-cover" />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 flex flex-col items-center justify-center gap-1">
+                          <div className="flex justify-center gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-label-sm text-on-surface-variant">schedule</span>
+                              <span className="text-label-sm font-label-sm text-on-surface-variant">
+                                {match.match_date ? new Date(match.match_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                              </span>
+                            </div>
+                          </div>
+                          {match.match_date && (
+                            <span className={`text-xs font-bold tracking-widest uppercase ${new Date(match.match_date) - now <= 0 ? 'text-red-500' : 'text-orange-500 animate-pulse'}`}>
+                              {getTimeRemaining(match.match_date, now)}
+                            </span>
+                          )}
+                        </div>
+
+                        {isSaved && (
+                          <div className="mt-3 flex justify-center">
+                            <span className="bg-secondary text-on-secondary px-3 py-0.5 rounded-full text-label-sm font-label-sm animate-in fade-in zoom-in-95 duration-200">SAVED</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {savedMatches['usa_aus'] && (
-                  <div className="mt-3 flex justify-center">
-                    <span className="bg-secondary text-on-secondary px-3 py-0.5 rounded-full text-label-sm font-label-sm animate-in fade-in zoom-in-95 duration-200">SAVED</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Match Card 2: Mexico vs Canada */}
-              <div 
-                className={`bg-surface-container-lowest border p-gutter rounded-xl transition-all duration-300 ${
-                  savedMatches['mex_can'] 
-                    ? 'border-primary shadow-sm' 
-                    : 'border-outline-variant hover:shadow-[0_4px_20px_-2px_rgba(0,12,46,0.1)]'
-                }`}
-              >
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  {/* Team 1 */}
-                  <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img 
-                        alt="Mexico Flag" 
-                        className="w-full h-full object-cover" 
-                        src="https://flagcdn.com/w160/mx.png"
-                      />
-                    </div>
-                    <span className="text-headline-md font-headline-md text-on-surface">Mexico</span>
-                  </div>
-                  
-                  {/* Input Section */}
-                  <div 
-                    className={`flex items-center gap-4 bg-surface-container-low p-2 rounded-xl border transition-all ${
-                      savedMatches['mex_can'] ? 'border-primary ring-2 ring-primary/10' : 'border-outline-variant'
-                    }`}
-                  >
-                    <input 
-                      type="number"
-                      min="0"
-                      placeholder="2"
-                      value={predictions['mex_can_home']}
-                      onChange={(e) => handleScoreChange('mex_can', 'home', e.target.value)}
-                      className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
-                    />
-                    <span className="text-on-surface-variant font-bold text-headline-md">VS</span>
-                    <input 
-                      type="number"
-                      min="0"
-                      placeholder="1"
-                      value={predictions['mex_can_away']}
-                      onChange={(e) => handleScoreChange('mex_can', 'away', e.target.value)}
-                      className="w-14 h-14 text-center text-headline-md font-headline-md bg-white border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg transition-all"
-                    />
-                  </div>
-                  
-                  {/* Team 2 */}
-                  <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
-                    <span className="text-headline-md font-headline-md text-on-surface">Canada</span>
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img 
-                        alt="Canada Flag" 
-                        className="w-full h-full object-cover" 
-                        src="https://flagcdn.com/w160/ca.png"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {savedMatches['mex_can'] && (
-                  <div className="mt-4 flex justify-center">
-                    <span className="bg-secondary text-on-secondary px-3 py-0.5 rounded-full text-label-sm font-label-sm">SAVED</span>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </section>
-
-          {/* Group B Section (Locked matches) */}
-          <section>
-            <div className="flex items-center gap-4 mb-stack-sm">
-              <span className="text-label-sm font-label-sm bg-primary text-on-primary px-3 py-1 rounded">GROUP B</span>
-              <div className="h-px bg-outline-variant flex-grow"></div>
-              <span className="text-label-sm font-label-sm text-on-surface-variant">JUNE 12, 2026</span>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
-              
-              {/* Match Card 3: France vs Argentina (LOCKED) */}
-              <div className="bg-surface-container-low border border-outline-variant p-gutter rounded-xl opacity-80 cursor-not-allowed grayscale">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="flex flex-1 items-center gap-4 w-full md:w-auto">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img alt="France Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/fr.png" />
-                    </div>
-                    <span className="text-headline-md font-headline-md text-on-surface">France</span>
-                  </div>
-                  <div className="flex items-center gap-4 p-2 rounded-xl">
-                    <span className="material-symbols-outlined text-headline-lg text-outline">lock</span>
-                  </div>
-                  <div className="flex flex-1 items-center justify-end gap-4 w-full md:w-auto">
-                    <span className="text-headline-md font-headline-md text-on-surface">Argentina</span>
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
-                      <img alt="Argentina Flag" className="w-full h-full object-cover" src="https://flagcdn.com/w160/ar.png" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-center text-label-sm font-label-sm text-on-surface-variant mt-2 uppercase tracking-wide">Predictions Locked</p>
-              </div>
-
-            </div>
-          </section>
-
+              </section>
+            ))
+          )}
         </div>
 
         {/* Sidebar Info */}
@@ -325,11 +336,11 @@ export default function Picks({ user, onUpdateStats }) {
                 <div className="w-full bg-on-primary/20 h-2 rounded-full">
                   <div 
                     className="bg-tertiary-fixed h-full rounded-full shadow-[0_0_8px_rgba(233,196,0,0.5)] transition-all duration-500" 
-                    style={{ width: `${Math.max(10, completionPercent)}%` }}
+                    style={{ width: `${Math.max(0, completionPercent)}%` }}
                   ></div>
                 </div>
                 <p className="text-label-sm font-label-sm opacity-80 uppercase tracking-widest text-white">
-                  Picks Completed: {savedCount} / 3 ({completionPercent}%)
+                  Picks Completed: {savedCount} / {totalPicks} ({completionPercent}%)
                 </p>
               </div>
             </div>
