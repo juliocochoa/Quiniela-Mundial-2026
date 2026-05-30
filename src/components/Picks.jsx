@@ -28,6 +28,38 @@ const getTimeRemaining = (matchDateStr, now) => {
   return `Cierra en ${diffMinutes}m`;
 };
 
+const getMatchStatus = (match, now) => {
+  if (!match.match_date) return 'upcoming';
+  const matchDate = new Date(match.match_date);
+  const isFinished = match.home_score !== null && match.away_score !== null;
+
+  if (isFinished) return 'finished';
+
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const matchDay = new Date(matchDate);
+  matchDay.setHours(0, 0, 0, 0);
+
+  if (matchDay.getTime() === today.getTime()) return 'live';
+
+  return 'upcoming';
+};
+
+const STATUS_CONFIG = {
+  live: {
+    label: 'Live',
+    dotClass: 'bg-secondary animate-pulse',
+  },
+  upcoming: {
+    label: 'Upcoming',
+    dotClass: 'bg-primary',
+  },
+  finished: {
+    label: 'Finished',
+    dotClass: 'bg-outline',
+  },
+};
+
 export default function Picks({ user, onUpdateStats }) {
   const [now, setNow] = useState(new Date());
 
@@ -310,10 +342,12 @@ export default function Picks({ user, onUpdateStats }) {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-4">
-                  {groupMatches.map((match) => {
+                    {groupMatches.map((match) => {
                     const matchId = match.id || `${match.home}_${match.away}`;
                     const isSaved = savedMatches[matchId];
                     const isSavedInApi = apiPicks?.some(p => p.match_id === matchId);
+                    const status = getMatchStatus(match, now);
+                    const statusInfo = STATUS_CONFIG[status];
                     return (
                       <div 
                         key={matchId}
@@ -369,6 +403,10 @@ export default function Picks({ user, onUpdateStats }) {
                         </div>
                         
                         <div className="mt-4 flex flex-col items-center justify-center gap-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${statusInfo.dotClass}`}></div>
+                            <span className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">{statusInfo.label}</span>
+                          </div>
                           <div className="flex justify-center gap-6">
                             <div className="flex items-center gap-2">
                               <span className="material-symbols-outlined text-label-sm text-on-surface-variant">schedule</span>
